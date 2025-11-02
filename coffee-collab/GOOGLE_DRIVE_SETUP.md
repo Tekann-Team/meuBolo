@@ -62,10 +62,13 @@ Este guia explica como configurar o upload automático de imagens para o Google 
    - **Origens JavaScript autorizadas**: 
      - `http://localhost:5173` (para desenvolvimento local - IMPORTANTE!)
      - `http://localhost` (também adicione sem porta para evitar erros)
-     - `https://seu-usuario.github.io` (para produção no GitHub Pages)
-   - **URIs de redirecionamento autorizados**:
+     - `https://seu-usuario.github.io` (para produção no GitHub Pages - substitua pelo seu domínio real)
+     - ⚠️ **CRÍTICO**: Adicione a URL EXATA onde a aplicação está hospedada em produção
+   
+   - **URIs de redirecionamento autorizados** (opcional para Google Identity Services, mas recomendado):
      - `http://localhost:5173` (para desenvolvimento local)
      - `https://seu-usuario.github.io` (para produção no GitHub Pages)
+     - ⚠️ **Nota**: Para Google Identity Services (GIS), as URIs de redirecionamento não são estritamente necessárias, mas adicionar não faz mal
 5. Clique em **"CRIAR"**
 6. **IMPORTANTE**: Copie e salve:
    - **ID do Cliente** (ex: `123456789-abcdefg.apps.googleusercontent.com`)
@@ -186,17 +189,51 @@ O código já está configurado para usar Google Identity Services (GIS), que é
 
 ---
 
-## 🔧 Passo 7: Configurar domínios autorizados (após deploy)
+## 🔧 Passo 7: Configurar domínios autorizados (CRÍTICO PARA PRODUÇÃO)
+
+⚠️ **IMPORTANTE**: Este passo é **OBRIGATÓRIO** para que o upload funcione em produção. Sem isso, você receberá o erro `redirect_uri_mismatch`.
 
 Quando fizer o deploy para produção:
 
 1. Volte ao Google Cloud Console → **"APIs e Serviços"** → **"Credenciais"**
 2. Clique no seu **ID do cliente OAuth**
-3. Em **"Origens JavaScript autorizadas"**, adicione:
-   - URL do seu site (ex: `https://seu-usuario.github.io`)
-4. Em **"URIs de redirecionamento autorizados"**, adicione:
-   - URL do seu site (ex: `https://seu-usuario.github.io`)
-5. Salve as alterações
+3. Em **"Origens JavaScript autorizadas"**, adicione **TODOS** os domínios onde a aplicação será acessada:
+   - `http://localhost:5173` (desenvolvimento local - já deve estar)
+   - `http://localhost` (desenvolvimento local alternativo - já deve estar)
+   - **URL do seu site em produção** (ex: `https://seu-usuario.github.io` ou `https://seu-dominio.com`)
+   - **Com a porta, se necessário** (ex: `https://seu-usuario.github.io:443`)
+   - **Sem a porta também** (ex: `https://seu-usuario.github.io`)
+   
+   💡 **Dica**: Adicione ambas as variações (com e sem porta) para evitar problemas.
+   
+4. **Para Google Identity Services (GIS)**: 
+   - ⚠️ **NÃO é necessário** adicionar URIs de redirecionamento (ao contrário da API antiga)
+   - As "Origens JavaScript autorizadas" são suficientes
+   - Mas se você vir o campo "URIs de redirecionamento autorizados", pode adicionar por segurança:
+     - `http://localhost:5173`
+     - `https://seu-usuario.github.io`
+     
+5. **Salve as alterações** (é importante clicar em "Salvar")
+6. ⏱️ **Aguarde alguns minutos** para as alterações propagarem (geralmente 1-5 minutos)
+
+### ❌ Erro Comum: redirect_uri_mismatch
+
+Se você estiver vendo o erro `redirect_uri_mismatch` ou `Acesso bloqueado: a solicitação do app é inválida`:
+
+1. **Verifique a URL exata** onde a aplicação está rodando
+   - Abra o console do navegador (F12)
+   - Digite: `window.location.origin`
+   - Copie o valor exato (incluindo porta, se houver)
+
+2. **Adicione essa URL EXATA** nas "Origens JavaScript autorizadas"
+   - Não use URLs com paths (ex: não use `https://site.com/path`)
+   - Use apenas o domínio e porta: `https://site.com` ou `https://site.com:443`
+
+3. **Verifique se salvou** as alterações no Google Cloud Console
+
+4. **Aguarde alguns minutos** e tente novamente (mudanças podem levar tempo para propagar)
+
+5. **Teste novamente** após fazer as alterações
 
 ---
 
@@ -208,6 +245,68 @@ Após configurar tudo:
 2. Tente fazer upload de uma imagem
 3. Na primeira vez, será solicitada autorização do Google
 4. Após autorizar, o upload deve funcionar automaticamente
+
+---
+
+## 🔧 Troubleshooting (Solução de Problemas)
+
+### ❌ Erro: "redirect_uri_mismatch" ou "Acesso bloqueado: a solicitação do app é inválida"
+
+**Causa**: O domínio da aplicação não está autorizado no Google Cloud Console.
+
+**Solução**:
+1. Identifique a URL exata onde a aplicação está rodando:
+   - Abra o console do navegador (F12)
+   - Digite: `console.log(window.location.origin)`
+   - Copie o valor exato (ex: `https://seu-usuario.github.io`)
+
+2. No Google Cloud Console:
+   - Vá em **APIs e Serviços** → **Credenciais**
+   - Clique no seu **ID do cliente OAuth**
+   - Em **"Origens JavaScript autorizadas"**, adicione a URL EXATA (sem paths)
+   - **Salve** as alterações
+
+3. Aguarde 1-5 minutos para propagação e teste novamente
+
+### ❌ Erro: "Popup window closed" ou "A janela de autenticação foi fechada"
+
+**Causa**: O usuário fechou a janela de autorização antes de completar.
+
+**Solução**:
+- Tente novamente e **não feche** a janela de autorização do Google
+- Complete o processo de autorização clicando em "Permitir"
+
+### ❌ Erro: "Token de acesso não recebido"
+
+**Causa**: Problema na resposta do Google OAuth.
+
+**Solução**:
+1. Verifique se o Google Client ID está correto no `.env` ou GitHub Secrets
+2. Verifique se o domínio está autorizado (veja erro acima)
+3. Tente fazer logout e login novamente
+4. Limpe o cache do navegador e tente novamente
+
+### ❌ Erro: "Google Identity Services failed to load"
+
+**Causa**: Problema de conexão ou bloqueador de anúncios.
+
+**Solução**:
+1. Verifique sua conexão com a internet
+2. Desative bloqueadores de anúncios/extensões que podem bloquear scripts do Google
+3. Verifique se os scripts do Google estão sendo carregados:
+   - Abra o console do navegador (F12)
+   - Vá em "Network" e procure por `gsi/client` e `api.js`
+   - Se não estiverem sendo carregados, verifique o arquivo `index.html`
+
+### ❌ Upload funciona localmente, mas não em produção
+
+**Causa**: Domínio de produção não está autorizado.
+
+**Solução**:
+1. Adicione a URL de produção nas "Origens JavaScript autorizadas"
+2. Verifique se as variáveis de ambiente estão configuradas no GitHub Secrets
+3. Certifique-se de que o build foi feito após adicionar os secrets
+4. Aguarde alguns minutos após salvar as alterações no Google Cloud Console
 
 ---
 

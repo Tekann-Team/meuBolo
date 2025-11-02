@@ -93,11 +93,31 @@ export async function uploadFileToDrive(file, folderId, fileName = null) {
   } catch (error) {
     console.error('Error uploading file to Google Drive:', error)
     
-    // If it's an authentication error, provide helpful message
-    if (error.message?.includes('auth') || error.message?.includes('sign in') || error.message?.includes('authenticate')) {
+    // Provide specific error messages based on error type
+    const errorMessage = error.message || String(error)
+    
+    // Authentication/configuration errors
+    if (errorMessage.includes('redirect_uri_mismatch') || 
+        errorMessage.includes('invalid_client') || 
+        errorMessage.includes('não está autorizado')) {
+      throw error // Keep the detailed error message from authenticateGoogleDrive
+    }
+    
+    // Authentication errors (generic)
+    if (errorMessage.includes('auth') || 
+        errorMessage.includes('sign in') || 
+        errorMessage.includes('authenticate') ||
+        errorMessage.includes('Token de acesso')) {
       throw new Error('Erro de autenticação. Por favor, autorize o acesso ao Google Drive quando solicitado.')
     }
     
+    // Popup closed error
+    if (errorMessage.includes('popup_closed') || 
+        errorMessage.includes('janela de autenticação foi fechada')) {
+      throw new Error('A janela de autorização foi fechada. Por favor, tente novamente e complete a autorização.')
+    }
+    
+    // Re-throw with original error message if it's already descriptive
     throw error
   }
 }

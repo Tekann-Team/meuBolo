@@ -140,6 +140,9 @@ export async function authenticateGoogleDrive() {
   await checkGoogleAccountsLoaded()
   await initGoogleDrive()
   
+  // Get current origin for better error messages
+  const currentOrigin = window.location.origin
+  
   // Use Google Identity Services (new API) to get token
   return new Promise((resolve, reject) => {
     try {
@@ -156,14 +159,42 @@ export async function authenticateGoogleDrive() {
         },
         error_callback: (error) => {
           console.error('Error getting token:', error)
-          reject(new Error(`Erro ao obter token: ${error.type || error.message || 'Erro desconhecido'}`))
-        }
+          
+          // Provide specific error messages based on error type
+          let errorMessage = 'Erro ao obter token'
+          
+          if (error.type === 'popup_closed' || error.message === 'Popup window closed') {
+            errorMessage = 'A janela de autenticação foi fechada. Por favor, tente novamente e conclua a autorização.'
+          } else if (error.type === 'access_denied' || error.message?.includes('access_denied')) {
+            errorMessage = 'Acesso negado. Por favor, autorize o acesso ao Google Drive quando solicitado.'
+          } else if (error.message?.includes('redirect_uri_mismatch') || error.message?.includes('invalid_client')) {
+            errorMessage = `Erro de configuração OAuth: O domínio "${currentOrigin}" não está autorizado no Google Cloud Console. ` +
+                         `Por favor, adicione "${currentOrigin}" nas "Origens JavaScript autorizadas" nas credenciais OAuth. ` +
+                         `Veja GOOGLE_DRIVE_SETUP.md para mais detalhes.`
+          } else {
+            errorMessage = `Erro ao obter token: ${error.type || error.message || 'Erro desconhecido'}`
+          }
+          
+          reject(new Error(errorMessage))
+        },
+        // Additional options for better UX
+        enable_granular_consent: true // Enable granular consent for better UX
       })
       
       // Request access token (first time will show consent screen)
-      tokenClient.requestAccessToken()
+      // Using prompt: '' to avoid forcing prompt unless necessary (token expired, etc)
+      tokenClient.requestAccessToken({ prompt: '' })
     } catch (error) {
-      reject(new Error(`Erro ao inicializar cliente OAuth: ${error.message || 'Erro desconhecido'}`))
+      // Check if it's a configuration error
+      if (error.message?.includes('redirect_uri') || error.message?.includes('invalid_client')) {
+        reject(new Error(
+          `Erro de configuração OAuth: O domínio "${currentOrigin}" não está autorizado. ` +
+          `Adicione "${currentOrigin}" nas "Origens JavaScript autorizadas" no Google Cloud Console. ` +
+          `Veja GOOGLE_DRIVE_SETUP.md para instruções detalhadas.`
+        ))
+      } else {
+        reject(new Error(`Erro ao inicializar cliente OAuth: ${error.message || 'Erro desconhecido'}`))
+      }
     }
   })
 }

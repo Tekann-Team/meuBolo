@@ -3,6 +3,7 @@ import {
   doc, 
   getDoc, 
   setDoc,
+  deleteDoc,
   collection,
   getDocs,
   query,
@@ -116,4 +117,13 @@ export async function getAllUsers() {
     id: doc.id,
     ...doc.data()
   }))
+}
+
+/**
+ * Delete user profile (admin only)
+ * WARNING: This only deletes the Firestore document, not the Firebase Auth user
+ */
+export async function deleteUser(userId) {
+  const userRef = doc(db, 'users', userId)
+  await deleteDoc(userRef)
 }

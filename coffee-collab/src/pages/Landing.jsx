@@ -76,7 +76,7 @@ export function Landing() {
     }
   }
 
-  const subtitle = 'Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro e Abastecimento Operacional'
+  const subtitle = 'Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional'
 
   return (
     <div

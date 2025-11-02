@@ -127,7 +127,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 **Elementos do Header**:
 - **Nome do sistema**: "CAFÉ GRÃO" (esquerda)
-- **Slogan**: "Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro e Abastecimento Operacional" (logo abaixo do título, em itálico e tamanho menor)
+- **Slogan**: "Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional" (logo abaixo do título, em itálico e tamanho menor)
 - **Foto do usuário**: Circular, clicável (vai para Settings)
 - **Nome do usuário**: Ao lado da foto
 - **Total de Contribuições**: Valor total já contribuído pelo usuário
@@ -151,25 +151,29 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 **Avisos Possíveis**:
 
-1. **"Já chegou o café?!"**
+1. **"☕ Já chegou o café?!"**
    - **Condição**: Usuário possui contribuição(ões) com `arrivalEvidence: null` ou `arrivalDate: null`
-   - **Exibição**: Card destacado
-   - **Ação**: Botão "Editar Contribuição" que abre modal de edição dessa contribuição
+   - **Exibição**: Card destacado com gradiente bege/marrom e borda laranja
+   - **Ação**: Botão "Editar Contribuição" que abre modal de edição da primeira contribuição pendente
+   - **Status**: ✅ Implementado
 
-2. **"Não esqueça de dar o seu voto!"**
+2. **"⭐ Não esqueça de dar o seu voto!"**
    - **Condição**: Existe produto sem voto do usuário atual
-   - **Exibição**: Card destacado
-   - **Ação**: Botão que redireciona para `/votes`
+   - **Exibição**: Card destacado com gradiente bege claro e borda dourada
+   - **Ação**: Botão "Ir para Votações" que redireciona para `/votes`
+   - **Status**: ✅ Implementado
 
-3. **"Menor contribuição dos últimos X meses detectada!"**
+3. **"📊 Menor contribuição dos últimos X meses detectada!"**
    - **Condição**: Usuário está em última posição (ou dividindo última) no ranking de KGs dos últimos X meses (onde X = `calculationBaseMonths` da configuração)
-   - **Exibição**: Card destacado (pode ser cômico/divertido)
+   - **Exibição**: Card destacado com gradiente amarelo claro (pode ser cômico/divertido)
    - **Nota**: X é configurável por admins em Settings
+   - **Status**: ✅ Implementado
 
 **Regras dos Avisos**:
 - Aparecem apenas se as condições forem verdadeiras
 - Múltiplos avisos podem aparecer simultaneamente
 - Ordem de prioridade: 1. Chegada do café, 2. Voto pendente, 3. Menor contribuição
+- Atualizam automaticamente quando dados mudam
 
 #### Dashboard
 
@@ -458,8 +462,13 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 - **Sistema de estrelas**: 5 estrelas clicáveis (0-5, permitindo meia estrela)
 - **Média exibida**: Média geral do produto
 - **Highlight**: Produtos não votados pelo usuário destacados visualmente
-- **Filtros**: Filtrar por nome, rating, etc.
-- **Ordenação**: Ordenar por nome, média, etc.
+- **Filtros**: ✅ Implementado
+  - Por nome (busca em tempo real)
+  - Por rating mínimo
+- **Ordenação**: ✅ Implementado
+  - Por nome (crescente/decrescente)
+  - Por rating (crescente/decrescente)
+  - Mantém produtos sem voto primeiro (destaque visual)
 
 ### Comportamento
 
@@ -515,9 +524,23 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - Avaliação em estrelas do produto
   - Quantidade comprada (kg)
   - Valor total da compra
+  - Botão "Evidências" (mostra/oculta evidências de compra e chegada quando disponíveis)
 
-- **Filtros**: Por usuário, produto, data, etc.
-- **Ordenação**: Por data, valor, quantidade, etc.
+- **Exibição de Evidências**:
+  - Botão "Evidências" aparece apenas se houver evidência de compra ou chegada
+  - Ao clicar, expande para mostrar imagens das evidências (se disponíveis)
+  - Imagens clicáveis abrem em nova aba
+  - Se imagem não carregar, mostra link clicável
+
+- **Filtros**: ✅ Implementado
+  - Por usuário (dropdown)
+  - Por produto (dropdown)
+  - Por data inicial
+  - Por data final
+- **Ordenação**: ✅ Implementado
+  - Por data (crescente/decrescente)
+  - Por valor (crescente/decrescente)
+  - Por quantidade (crescente/decrescente)
 
 ### Edição
 
@@ -558,8 +581,14 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - Atualizar (editar produtos)
   - Deletar (quando não houver contribuições vinculadas)
 
-- **Filtros**: Por nome, rating, preço médio
-- **Ordenação**: Por nome, rating, preço médio
+- **Filtros**: ✅ Implementado
+  - Por nome (busca em tempo real)
+  - Por rating mínimo
+  - Por preço máximo (R$/kg)
+- **Ordenação**: ✅ Implementado
+  - Por nome (crescente/decrescente)
+  - Por rating (crescente/decrescente)
+  - Por preço médio (crescente/decrescente)
 
 ---
 
@@ -595,7 +624,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 O footer aparece fixo na parte inferior de todas as páginas que usam o componente `Layout`.
 
 **Elementos do Footer**:
-- **Nome e slogan**: "☕ CAFÉ GRÃO - Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro e Abastecimento Operacional"
+- **Nome e slogan**: "☕ CAFÉ GRÃO - Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional"
 - **Créditos**: "Feito com ❤️ e muito ☕ | [Ano atual]"
 
 ### Características
@@ -649,10 +678,24 @@ O footer aparece fixo na parte inferior de todas as páginas que usam o componen
 
 ### Funcionalidades
 
-- **Listar todos os usuários**: Exibe todos os usuários do sistema
-- **Editar flags dos usuários**:
+- **Listar todos os usuários**: Exibe todos os usuários do sistema ✅ Implementado
+- **Filtros**: ✅ Implementado
+  - Por nome (busca em tempo real)
+  - Por email (busca em tempo real)
+  - Por status de administrador (todos/admin/não-admin)
+  - Por status de ativo (todos/ativo/inativo)
+- **Ordenação**: ✅ Implementado
+  - Por nome (crescente/decrescente)
+  - Por email (crescente/decrescente)
+  - Por data de criação (crescente/decrescente)
+- **Editar flags dos usuários**: ✅ Implementado
   - **isAdmin**: Checkbox para tornar usuário administrador ou não
   - **isActive**: Checkbox para ativar/desativar usuário
+- **Deletar usuário**: ✅ Implementado
+  - Botão "Deletar" em cada card de usuário
+  - Confirmação obrigatória antes de deletar
+  - Não permite deletar o próprio usuário
+  - Apenas administradores podem deletar
 - **Visualização**:
   - Foto do usuário (ou placeholder)
   - Nome do usuário
@@ -661,15 +704,20 @@ O footer aparece fixo na parte inferior de todas as páginas que usam o componen
 
 ### Comportamento
 
-- Ao alterar checkbox: Atualiza imediatamente no Firestore
-- Feedback visual após salvar
-- Carregamento de todos os usuários ao abrir a página
+- Ao alterar checkbox: Atualiza imediatamente no Firestore ✅
+- Ao deletar: Remove usuário do Firestore (não remove do Firebase Auth)
+- Feedback visual após salvar/deletar ✅
+- Carregamento de todos os usuários ao abrir a página ✅
+- Filtros e ordenação aplicados em tempo real ✅
 
 ### Regras
 
-- Apenas administradores podem acessar esta página
-- Administradores podem editar qualquer flag de qualquer usuário
-- Mudanças são salvas imediatamente no Firestore
+- Apenas administradores podem acessar esta página ✅
+- Administradores podem editar qualquer flag de qualquer usuário ✅
+- Administradores podem deletar qualquer usuário (exceto a si mesmo) ✅
+- Não é possível deletar o próprio usuário (proteção implementada) ✅
+- Mudanças são salvas imediatamente no Firestore ✅
+- ⚠️ **Nota**: A função de deletar remove apenas o documento do Firestore, não remove a conta do Firebase Authentication
 
 ---
 

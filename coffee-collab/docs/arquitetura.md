@@ -413,10 +413,13 @@ O sistema utiliza **Apache ECharts** para criar gráficos interativos e profissi
 
 ### Funcionalidades
 
-- **Upload de imagens**: Para evidências de compra (Google Drive - pasta compartilhada)
-- **Edição de contribuições**: Modal completo para editar contribuições existentes
-- **Notificações**: Alertas de café acabando
-- **Relatórios**: Gráficos e estatísticas avançadas
+- **Upload de imagens**: Para evidências de compra (Google Drive - pasta compartilhada) ✅ Implementado
+- **Edição de contribuições**: Modal completo para editar contribuições existentes ✅ Implementado
+- **Notificações**: Alertas personalizados na página Home ✅ Implementado
+  - Alerta de contribuições sem chegada
+  - Alerta de produtos sem voto
+  - Alerta de menor contribuição no ranking
+- **Relatórios**: Gráficos e estatísticas avançadas ✅ Implementado (gráficos de colaboradores e timeline)
 
 ---
 

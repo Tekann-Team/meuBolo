@@ -9,6 +9,7 @@ import { useUserProfile } from '../hooks/useUserProfile'
 import { NewContributionModal } from '../components/NewContributionModal'
 import { EditContributionModal } from '../components/EditContributionModal'
 import { deleteContribution } from '../services/contributionService'
+import { ensureImageUrl } from '../services/googleDriveService'
 
 export function Contributions() {
   const { user } = useAuth()
@@ -19,6 +20,19 @@ export function Contributions() {
   const [loading, setLoading] = useState(true)
   const [showNewContributionModal, setShowNewContributionModal] = useState(false)
   const [editingContributionId, setEditingContributionId] = useState(null)
+  const [showingEvidence, setShowingEvidence] = useState(null) // contributionId of the one showing evidence
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    userId: '',
+    productId: '',
+    startDate: '',
+    endDate: ''
+  })
+  const [sortBy, setSortBy] = useState('date') // 'date', 'value', 'quantity'
+  const [sortOrder, setSortOrder] = useState('desc') // 'asc', 'desc'
+  const [allContributions, setAllContributions] = useState([])
+  const [allUsers, setAllUsers] = useState([])
+  const [allProducts, setAllProducts] = useState([])
 
   const loadContributions = async () => {
     try {
@@ -28,7 +42,9 @@ export function Contributions() {
         getAllProducts()
       ])
       
-      setContributions(contribs)
+      setAllContributions(contribs)
+      setAllUsers(usersList)
+      setAllProducts(productsList)
       
       // Build users map for display names
       const usersMapObj = {}
@@ -43,12 +59,68 @@ export function Contributions() {
         productsMapObj[p.id] = p
       })
       setProductsMap(productsMapObj)
+      
+      // Apply filters and sorting
+      applyFiltersAndSort(contribs, filters, sortBy, sortOrder)
     } catch (error) {
       console.error('Error loading contributions:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  const applyFiltersAndSort = (contribs, filterValues, sortField, sortDirection) => {
+    let filtered = [...contribs]
+    
+    // Apply filters
+    if (filterValues.userId) {
+      filtered = filtered.filter(c => c.userId === filterValues.userId)
+    }
+    if (filterValues.productId) {
+      filtered = filtered.filter(c => c.productId === filterValues.productId)
+    }
+    if (filterValues.startDate) {
+      const startDate = new Date(filterValues.startDate)
+      filtered = filtered.filter(c => {
+        const contribDate = c.purchaseDate?.toDate?.() || new Date(c.purchaseDate)
+        return contribDate >= startDate
+      })
+    }
+    if (filterValues.endDate) {
+      const endDate = new Date(filterValues.endDate)
+      endDate.setHours(23, 59, 59, 999) // Include entire day
+      filtered = filtered.filter(c => {
+        const contribDate = c.purchaseDate?.toDate?.() || new Date(c.purchaseDate)
+        return contribDate <= endDate
+      })
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let comparison = 0
+      
+      if (sortField === 'date') {
+        const dateA = a.purchaseDate?.toDate?.() || new Date(a.purchaseDate)
+        const dateB = b.purchaseDate?.toDate?.() || new Date(b.purchaseDate)
+        comparison = dateA - dateB
+      } else if (sortField === 'value') {
+        comparison = (a.value || 0) - (b.value || 0)
+      } else if (sortField === 'quantity') {
+        comparison = (a.quantityKg || 0) - (b.quantityKg || 0)
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+    
+    setContributions(filtered)
+  }
+
+  useEffect(() => {
+    if (allContributions.length > 0) {
+      applyFiltersAndSort(allContributions, filters, sortBy, sortOrder)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortBy, sortOrder, allContributions.length])
 
   useEffect(() => {
     loadContributions()
@@ -92,26 +164,203 @@ export function Contributions() {
   return (
     <Layout>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '32px', color: '#FFF', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}>
-            Contribuições
-          </h1>
-          <button
-            onClick={() => setShowNewContributionModal(true)}
-            style={{
-              padding: '12px 24px',
-              background: 'linear-gradient(135deg, #A0522D 0%, #D2691E 100%)',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            + Nova Contribuição
-          </button>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h1 style={{ fontSize: '32px', color: '#FFF', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}>
+              Contribuições
+            </h1>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                style={{
+                  padding: '12px 24px',
+                  background: showFilters ? '#8B4513' : '#FFF',
+                  color: showFilters ? '#FFF' : '#8B4513',
+                  border: '2px solid #8B4513',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                }}
+              >
+                {showFilters ? 'Ocultar Filtros' : 'Filtrar'}
+              </button>
+              <button
+                onClick={() => setShowNewContributionModal(true)}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #A0522D 0%, #D2691E 100%)',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                }}
+              >
+                + Nova Contribuição
+              </button>
+            </div>
+          </div>
+
+          {/* Filters panel */}
+          {showFilters && (
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                marginBottom: '24px'
+              }}
+            >
+              <h3 style={{ fontSize: '20px', color: '#8B4513', marginBottom: '16px' }}>Filtros e Ordenação</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Usuário
+                  </label>
+                  <select
+                    value={filters.userId}
+                    onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      background: '#FFF'
+                    }}
+                  >
+                    <option value="">Todos os usuários</option>
+                    {allUsers.map(u => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Produto
+                  </label>
+                  <select
+                    value={filters.productId}
+                    onChange={(e) => setFilters({ ...filters, productId: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      background: '#FFF'
+                    }}
+                  >
+                    <option value="">Todos os produtos</option>
+                    {allProducts.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Data Inicial
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Data Final
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Ordenar por
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={{
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      background: '#FFF'
+                    }}
+                  >
+                    <option value="date">Data</option>
+                    <option value="value">Valor</option>
+                    <option value="quantity">Quantidade</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
+                    Ordem
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    style={{
+                      padding: '8px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      background: '#FFF'
+                    }}
+                  >
+                    <option value="desc">Decrescente</option>
+                    <option value="asc">Crescente</option>
+                  </select>
+                </div>
+                <div style={{ marginTop: '24px' }}>
+                  <button
+                    onClick={() => {
+                      setFilters({ userId: '', productId: '', startDate: '', endDate: '' })
+                      setSortBy('date')
+                      setSortOrder('desc')
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      background: '#FFF',
+                      color: '#8B4513',
+                      border: '2px solid #8B4513',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Limpar Filtros
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {contributions.length === 0 ? (
@@ -196,43 +445,119 @@ export function Contributions() {
                           R$ {contribution.value?.toFixed(2) || '0.00'}
                         </div>
                       </div>
+                      
+                      {/* Evidence section */}
+                      {showingEvidence === contribution.id && (
+                        <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {contribution.purchaseEvidence && (
+                              <div>
+                                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
+                                  Evidência de Compra:
+                                </div>
+                                <img
+                                  src={ensureImageUrl(contribution.purchaseEvidence)}
+                                  alt="Evidência de compra"
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '300px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    objectFit: 'contain'
+                                  }}
+                                  onClick={() => window.open(ensureImageUrl(contribution.purchaseEvidence), '_blank')}
+                                  onError={(e) => {
+                                    e.target.parentElement.innerHTML = `<a href="${contribution.purchaseEvidence}" target="_blank" style="color: #8B4513; text-decoration: underline;">Ver evidência de compra</a>`
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {contribution.arrivalEvidence && (
+                              <div>
+                                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
+                                  Evidência de Chegada:
+                                </div>
+                                <img
+                                  src={ensureImageUrl(contribution.arrivalEvidence)}
+                                  alt="Evidência de chegada"
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '300px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    objectFit: 'contain'
+                                  }}
+                                  onClick={() => window.open(ensureImageUrl(contribution.arrivalEvidence), '_blank')}
+                                  onError={(e) => {
+                                    e.target.parentElement.innerHTML = `<a href="${contribution.arrivalEvidence}" target="_blank" style="color: #8B4513; text-decoration: underline;">Ver evidência de chegada</a>`
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {!contribution.purchaseEvidence && !contribution.arrivalEvidence && (
+                              <div style={{ fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
+                                Nenhuma evidência disponível
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {(canEdit || canDelete) && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {canEdit && (
-                          <button
-                            onClick={() => setEditingContributionId(contribution.id)}
-                            style={{
-                              padding: '8px 16px',
-                              background: '#FFF',
-                              color: '#8B4513',
-                              border: '2px solid #8B4513',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            Editar
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDelete(contribution.id, contribution.userId)}
-                            style={{
-                              padding: '8px 16px',
-                              background: '#DC3545',
-                              color: '#FFF',
-                              border: 'none',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            Deletar
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      {(contribution.purchaseEvidence || contribution.arrivalEvidence) && (
+                        <button
+                          onClick={() => setShowingEvidence(showingEvidence === contribution.id ? null : contribution.id)}
+                          style={{
+                            padding: '8px 16px',
+                            background: showingEvidence === contribution.id ? '#8B4513' : '#FFF',
+                            color: showingEvidence === contribution.id ? '#FFF' : '#8B4513',
+                            border: '2px solid #8B4513',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            fontSize: '14px'
+                          }}
+                        >
+                          {showingEvidence === contribution.id ? 'Ocultar Evidências' : 'Evidências'}
+                        </button>
+                      )}
+                      {(canEdit || canDelete) && (
+                        <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                          {canEdit && (
+                            <button
+                              onClick={() => setEditingContributionId(contribution.id)}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#FFF',
+                                color: '#8B4513',
+                                border: '2px solid #8B4513',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Editar
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDelete(contribution.id, contribution.userId)}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#DC3545',
+                                color: '#FFF',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Deletar
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

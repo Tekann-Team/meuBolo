@@ -4,6 +4,7 @@ import { Layout } from '../components/Layout'
 import { useUserProfile } from '../hooks/useUserProfile'
 import { getAllUsers, updateUserProfile, deleteUser } from '../services/userService'
 import { useAuth } from '../hooks/useAuth'
+import { EditUserModal } from '../components/EditUserModal'
 
 export function Users() {
   const { profile } = useUserProfile()
@@ -19,6 +20,7 @@ export function Users() {
   const [sortBy, setSortBy] = useState('name') // 'name', 'email', 'created'
   const [sortOrder, setSortOrder] = useState('asc') // 'asc', 'desc'
   const [allUsers, setAllUsers] = useState([])
+  const [editingUserId, setEditingUserId] = useState(null)
 
   const loadUsers = async () => {
     try {
@@ -459,6 +461,24 @@ export function Users() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setEditingUserId(user.id)}
+                      disabled={saving}
+                      style={{
+                        padding: '8px 16px',
+                        background: '#FFF',
+                        color: '#8B4513',
+                        border: '2px solid #8B4513',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        opacity: saving ? 0.6 : 1
+                      }}
+                    >
+                      Editar
+                    </button>
                     {user.id !== currentUser?.uid && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.name)}
@@ -491,6 +511,18 @@ export function Users() {
           </div>
         )}
       </div>
+
+      {editingUserId && (
+        <EditUserModal
+          isOpen={!!editingUserId}
+          userId={editingUserId}
+          onClose={() => setEditingUserId(null)}
+          onSuccess={() => {
+            loadUsers()
+            setEditingUserId(null)
+          }}
+        />
+      )}
     </Layout>
   )
 }

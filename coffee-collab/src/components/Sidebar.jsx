@@ -62,8 +62,8 @@ export function Sidebar() {
           }} 
         />
         {isExpanded && (
-          <span style={{ color: '#8B4513', fontWeight: 'bold', fontSize: '14px' }}>
-            meu Café Grão
+          <span style={{ color: '#332518', fontWeight: 'bold', fontSize: '14px' }}>
+            meuCaféGrão
           </span>
         )}
       </div>

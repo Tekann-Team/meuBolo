@@ -232,9 +232,13 @@ export async function updateContribution(contributionId, updates) {
   
   const isDivided = updates.isDivided !== undefined ? updates.isDivided : (contribution.isDivided || false)
   const participantUserIds = updates.participantUserIds || []
+  const skipBalanceUpdate = updates.skipBalanceUpdate || false
   
-  // Handle divided contribution changes
-  if (isDivided && participantUserIds.length > 0) {
+  // Remove skipBalanceUpdate from updateData as it's not a field to save
+  delete updateData.skipBalanceUpdate
+  
+  // Handle divided contribution changes (only if not skipping balance updates)
+  if (!skipBalanceUpdate && isDivided && participantUserIds.length > 0) {
     // First, revert old balances if contribution was previously divided
     if (contribution.isDivided && contribution.details) {
       for (const detail of contribution.details) {
@@ -312,7 +316,7 @@ export async function updateContribution(contributionId, updates) {
     
     await newBatch.commit()
     updateData.isDivided = true
-  } else if (!isDivided && contribution.isDivided) {
+  } else if (!skipBalanceUpdate && !isDivided && contribution.isDivided) {
     // Was divided, now regular - revert all participants and restore buyer's full balance
     if (contribution.details) {
       for (const detail of contribution.details) {
@@ -342,8 +346,8 @@ export async function updateContribution(contributionId, updates) {
     }
     
     updateData.isDivided = false
-  } else {
-    // Regular contribution update
+  } else if (!skipBalanceUpdate) {
+    // Regular contribution update (only if not skipping balance updates)
     const oldQuantityKg = contribution.quantityKg || 0
     const newQuantityKg = updates.quantityKg !== undefined ? updates.quantityKg : oldQuantityKg
     
@@ -355,6 +359,11 @@ export async function updateContribution(contributionId, updates) {
         await updateUserProfile(contribution.userId, { balance: Math.max(0, newBalance) })
       }
     }
+  }
+  
+  // If skipping balance update, still update isDivided flag if changed
+  if (skipBalanceUpdate && updates.isDivided !== undefined) {
+    updateData.isDivided = updates.isDivided
   }
   
   await updateDoc(contributionRef, updateData)

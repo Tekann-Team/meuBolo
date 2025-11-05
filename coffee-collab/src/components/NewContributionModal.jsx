@@ -40,7 +40,7 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
       setLoading(true)
       try {
         const [usersList, productsList] = await Promise.all([
-          profile?.isAdmin ? getActiveUsers() : Promise.resolve([]),
+          getActiveUsers(), // Always load users for split selection
           getAllProducts()
         ])
         setUsers(usersList)
@@ -398,7 +398,7 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Rachar compra
+                Rachar compra (Vaquinha)
               </label>
               <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -430,6 +430,41 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
                 <label style={{ display: 'block', marginBottom: '12px', color: '#666', fontWeight: 'bold' }}>
                   Selecionar colaboradores que vão rachar:
                 </label>
+                
+                {/* Card readonly do usuário que está cadastrando */}
+                {(() => {
+                  const currentUserObj = users.find(u => u.id === (selectedUserId || user.uid))
+                  if (currentUserObj) {
+                    return (
+                      <div style={{ marginBottom: '12px', padding: '12px', background: '#FFF', borderRadius: '8px', border: '2px solid #D2691E', opacity: 0.8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {currentUserObj.photoURL && (
+                            <img
+                              src={currentUserObj.photoURL}
+                              alt={currentUserObj.name}
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#8B4513' }}>
+                              {currentUserObj.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                              (você está incluído)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+                
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '12px' }}>
                   {users.filter(u => u.id !== (selectedUserId || user.uid)).map((u) => (
                     <div

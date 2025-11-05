@@ -5,7 +5,7 @@ import { Layout } from '../components/Layout'
 import { useAuth } from '../hooks/useAuth'
 import { useUserProfile } from '../hooks/useUserProfile'
 import { getUserProfile } from '../services/userService'
-import { getAllContributions, getContributionsByUser, getContributionsMissingArrival } from '../services/contributionService'
+import { getAllContributions, getContributionsByUser, getContributionsMissingArrival, getContributionDetails } from '../services/contributionService'
 import { getAllProducts } from '../services/productService'
 import { getAllVotes, getVotesByUser } from '../services/voteService'
 import { getActiveUsers } from '../services/userService'
@@ -53,16 +53,48 @@ export function Home() {
     try {
       setLoading(true)
       
-      const [contributions, allContribs, users] = await Promise.all([
-        getContributionsByUser(user.uid),
+      const [allContribs, users] = await Promise.all([
         getAllContributions(),
         getActiveUsers()
       ])
 
-      // User stats
-      const totalValue = contributions.reduce((sum, c) => sum + (c.value || 0), 0)
-      const totalKg = contributions.reduce((sum, c) => sum + (c.quantityKg || 0), 0)
-      setUserStats({ totalValue, totalKg })
+      // Load details for all contributions and filter user's contributions
+      const allContribsWithDetails = await Promise.all(
+        allContribs.map(async (contrib) => {
+          if (contrib.isDivided) {
+            try {
+              const details = await getContributionDetails(contrib.id)
+              return { ...contrib, details }
+            } catch (error) {
+              console.error(`Error loading details for contribution ${contrib.id}:`, error)
+              return contrib
+            }
+          }
+          return contrib
+        })
+      )
+
+      // User stats - consider split contributions (user's actual share)
+      // Need to check ALL contributions (not just where user is creator) to find user's participation
+      let userTotalValue = 0
+      let userTotalKg = 0
+      
+      allContribsWithDetails.forEach(c => {
+        if (c.isDivided && c.details) {
+          // Find user's share in split contribution (user might be creator or participant)
+          const userDetail = c.details.find(d => d.userId === user.uid)
+          if (userDetail) {
+            userTotalValue += userDetail.value || 0
+            userTotalKg += userDetail.quantityKg || 0
+          }
+        } else if (c.userId === user.uid) {
+          // Regular contribution (not split) - user is the creator
+          userTotalValue += c.value || 0
+          userTotalKg += c.quantityKg || 0
+        }
+      })
+      
+      setUserStats({ totalValue: userTotalValue, totalKg: userTotalKg })
 
       setAllUsers(users) // Store users for chart component (users already have balance field)
 
@@ -331,37 +363,40 @@ export function Home() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '32px',
                 cursor: 'pointer',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                transition: 'background 150ms ease'
+                padding: '16px 30px',
+                borderRadius: '26px',
+                transition: 'background 150ms ease',
+                background: 'rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
               }}
               onClick={() => navigate('/settings')}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(139, 69, 19, 0.1)'
+                e.currentTarget.style.background = 'rgba(139, 69, 19, 0.15)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)'
               }}
             >
               <img
-                src={profile.photoURL || user.photoURL || 'https://via.placeholder.com/48?text=☕'}
+                src={profile.photoURL || user.photoURL || 'https://via.placeholder.com/64?text=☕'}
                 alt={profile.name}
                 style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '64px',
+                  height: '64px',
                   borderRadius: '50%',
-                  border: '2px solid #D2691E'
+                  border: '3px solid #D2691E',
+                  objectFit: 'cover'
                 }}
               />
               <div>
-                <div style={{ fontWeight: 'bold', color: '#8B4513' }}>{profile.name}</div>
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  Saldo Atual: {(allUsers.find(u => u.id === user.uid)?.balance || 0).toFixed(2)} kg
+                <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '18px', marginBottom: '4px' }}>{profile.name}</div>
+                <div style={{ fontSize: '15px', color: '#666', marginBottom: '2px' }}>
+                  Saldo Atual: <strong>{(allUsers.find(u => u.id === user.uid)?.balance || 0).toFixed(2)} kg</strong>
                 </div>
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  Total: R$ {userStats.totalValue.toFixed(2)} | {userStats.totalKg.toFixed(2)} kg
+                <div style={{ fontSize: '15px', color: '#666' }}>
+                  Total: <strong>R$ {userStats.totalValue.toFixed(2)}</strong> | <strong>{userStats.totalKg.toFixed(2)} kg</strong>
                 </div>
               </div>
             </div>

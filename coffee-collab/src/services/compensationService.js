@@ -113,6 +113,41 @@ export async function shouldTriggerCompensation() {
 }
 
 /**
+ * Get the last compensation date (most recent)
+ * @returns {Date|null} - Date of the last compensation, or null if no compensations exist
+ */
+export async function getLastCompensationDate() {
+  const compensations = await getAllCompensations()
+  
+  if (compensations.length === 0) {
+    return null
+  }
+  
+  // Compensations are already ordered by date desc, so first one is the most recent
+  const lastCompensation = compensations[0]
+  const lastDate = lastCompensation.date?.toDate?.() || new Date(lastCompensation.date)
+  
+  return lastDate
+}
+
+/**
+ * Check if a contribution purchase date is after the last compensation
+ * @param {Date|Timestamp} purchaseDate - Purchase date of the contribution
+ * @returns {Promise<boolean>} - True if contribution is already compensated (purchaseDate <= lastCompensationDate)
+ */
+export async function isContributionCompensated(purchaseDate) {
+  const lastCompDate = await getLastCompensationDate()
+  
+  if (!lastCompDate) {
+    return false // No compensations yet, so contribution is not compensated
+  }
+  
+  const purchaseDateObj = purchaseDate?.toDate?.() || new Date(purchaseDate)
+  
+  return purchaseDateObj <= lastCompDate
+}
+
+/**
  * Execute automatic compensation
  * This function finds the minimum balance and reduces all balances by that amount
  */
@@ -163,4 +198,5 @@ export async function executeAutomaticCompensation() {
 
   return compensationId
 }
+
 

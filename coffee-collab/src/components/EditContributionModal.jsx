@@ -7,6 +7,7 @@ import { searchProducts, createProduct, getAllProducts, getProductById } from '.
 import { getContributionById, updateContribution } from '../services/contributionService'
 import { uploadContributionEvidence } from '../services/storageService'
 import { ensureImageUrl } from '../services/googleDriveService'
+import { isContributionCompensated } from '../services/compensationService'
 
 export function EditContributionModal({ isOpen, contributionId, onClose, onSuccess }) {
   const { user } = useAuth()
@@ -33,6 +34,7 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
   const [arrivalDate, setArrivalDate] = useState('')
   const [isDivided, setIsDivided] = useState(false)
   const [selectedParticipants, setSelectedParticipants] = useState([])
+  const [isCompensated, setIsCompensated] = useState(false)
 
   // Load contribution data when modal opens
   useEffect(() => {
@@ -43,7 +45,7 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
       try {
         const [contribution, usersList, productsList] = await Promise.all([
           getContributionById(contributionId),
-          profile?.isAdmin ? getActiveUsers() : Promise.resolve([]),
+          getActiveUsers(), // Always load users for split selection
           getAllProducts()
         ])
         
@@ -92,6 +94,10 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
             setIsNewProduct(false)
           }
         }
+        
+        // Check if contribution is already compensated
+        const compensated = await isContributionCompensated(contribution.purchaseDate)
+        setIsCompensated(compensated)
       } catch (error) {
         console.error('Error loading contribution:', error)
         alert('Erro ao carregar contribuição')
@@ -217,6 +223,10 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
         }
       }
 
+      // Check if contribution is already compensated before updating balances
+      const contribution = await getContributionById(contributionId)
+      const wasCompensated = await isContributionCompensated(contribution.purchaseDate)
+      
       // Update contribution
       const updateData = {
         userId: selectedUserId || user.uid,
@@ -233,6 +243,12 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
       if (newPurchaseEvidenceURL !== purchaseEvidenceURL || newArrivalEvidenceURL !== arrivalEvidenceURL) {
         updateData.purchaseEvidence = newPurchaseEvidenceURL
         updateData.arrivalEvidence = newArrivalEvidenceURL
+      }
+      
+      // If contribution was already compensated, don't update balances
+      if (wasCompensated) {
+        // Only update non-balance fields
+        updateData.skipBalanceUpdate = true // Flag to skip balance updates
       }
 
       await updateContribution(contributionId, updateData)
@@ -306,7 +322,29 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
         {loading ? (
           <div style={{ textAlign: 'center', padding: '48px' }}>Carregando...</div>
         ) : (
-          <form onSubmit={handleSubmit}>
+          <>
+            {isCompensated && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)',
+                  border: '2px solid #DAA520',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginBottom: '24px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>⚠️</span>
+                  <strong style={{ color: '#8B4513', fontSize: '16px' }}>
+                    Contribuição já compensada
+                  </strong>
+                </div>
+                <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
+                  Esta contribuição já foi compensada. Qualquer edição não afetará o saldo das pessoas.
+                </p>
+              </div>
+            )}
+            <form onSubmit={handleSubmit}>
             {profile?.isAdmin && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
@@ -410,7 +448,7 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Rachar compra
+                Rachar compra (Vaquinha)
               </label>
               <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -442,6 +480,41 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
                 <label style={{ display: 'block', marginBottom: '12px', color: '#666', fontWeight: 'bold' }}>
                   Selecionar colaboradores que vão rachar:
                 </label>
+                
+                {/* Card readonly do usuário que está cadastrando */}
+                {(() => {
+                  const currentUserObj = users.find(u => u.id === (selectedUserId || user.uid))
+                  if (currentUserObj) {
+                    return (
+                      <div style={{ marginBottom: '12px', padding: '12px', background: '#FFF', borderRadius: '8px', border: '2px solid #D2691E', opacity: 0.8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {currentUserObj.photoURL && (
+                            <img
+                              src={currentUserObj.photoURL}
+                              alt={currentUserObj.name}
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#8B4513' }}>
+                              {currentUserObj.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                              (você está incluído)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+                
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '12px' }}>
                   {users.filter(u => u.id !== (selectedUserId || user.uid)).map((u) => (
                     <div
@@ -706,6 +779,7 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
               </button>
             </div>
           </form>
+          </>
         )}
       </div>
     </div>

@@ -90,7 +90,15 @@ export function Contributions() {
     
     // Apply filters
     if (filterValues.userId) {
-      filtered = filtered.filter(c => c.userId === filterValues.userId)
+      filtered = filtered.filter(c => {
+        // Include if user is the creator
+        if (c.userId === filterValues.userId) return true
+        // Include if user is part of the split (contributionDetails)
+        if (c.isDivided && c.details) {
+          return c.details.some(detail => detail.userId === filterValues.userId)
+        }
+        return false
+      })
     }
     if (filterValues.productId) {
       filtered = filtered.filter(c => c.productId === filterValues.productId)
@@ -414,49 +422,119 @@ export function Contributions() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '16px' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                        {contributionUser?.photoURL && (
-                          <img
-                            src={contributionUser.photoURL}
-                            alt={contributionUser.name}
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {contribution.isDivided && contribution.details && contribution.details.length > 0 ? (
+                        // Vaquinha (split contribution)
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '12px',
+                            flexWrap: 'wrap'
+                          }}>
+                            <div style={{ 
+                              display: 'inline-block',
+                              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                              color: '#8B4513',
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}>
+                              Vaquinha
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {purchaseDate.toLocaleDateString('pt-BR')}
+                            </div>
+                            {contribution.details.length <= 3 ? (
+                              // Até 3 pessoas: mostrar foto + nome
+                              contribution.details.map((detail) => {
+                                const detailUser = usersMap[detail.userId]
+                                if (!detailUser) return null
+                                return (
+                                  <div
+                                    key={detail.userId}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '8px 12px',
+                                      background: 'rgba(139, 69, 19, 0.05)',
+                                      borderRadius: '8px'
+                                    }}
+                                  >
+                                    <img
+                                      src={detailUser.photoURL || 'https://via.placeholder.com/40?text=☕'}
+                                      alt={detailUser.name}
+                                      style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        border: '2px solid #D2691E',
+                                        objectFit: 'cover'
+                                      }}
+                                    />
+                                    <span style={{ fontSize: '14px', color: '#8B4513', fontWeight: '500' }}>
+                                      {detailUser.name}
+                                    </span>
+                                  </div>
+                                )
+                              })
+                            ) : (
+                              // Mais de 3 pessoas: apenas bolinhas com tooltip
+                              contribution.details.map((detail) => {
+                                const detailUser = usersMap[detail.userId]
+                                if (!detailUser) return null
+                                return (
+                                  <div
+                                    key={detail.userId}
+                                    title={detailUser.name}
+                                    style={{
+                                      position: 'relative',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <img
+                                      src={detailUser.photoURL || 'https://via.placeholder.com/40?text=☕'}
+                                      alt={detailUser.name}
+                                      style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        border: '2px solid #D2691E',
+                                        objectFit: 'cover'
+                                      }}
+                                    />
+                                  </div>
+                                )
+                              })
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        // Contribuição normal (não rachada)
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                          {contributionUser?.photoURL && (
+                            <img
+                              src={contributionUser.photoURL}
+                              alt={contributionUser.name}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          )}
+                          <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8B4513' }}>
                               {contributionUser?.name || 'Usuário desconhecido'}
                             </div>
-                            {contribution.isDivided && contribution.details && contribution.details.length > 0 && (() => {
-                              const totalParticipants = contribution.details.length
-                              const additionalCollaborators = totalParticipants - 1
-                              const valuePerPerson = contribution.value / totalParticipants
-                              const quantityPerPerson = contribution.quantityKg / totalParticipants
-                              return (
-                                <div style={{ 
-                                  fontSize: '12px', 
-                                  color: '#D2691E', 
-                                  background: '#FFF8E7',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  border: '1px solid #D2691E'
-                                }}>
-                                  +{additionalCollaborators} colaborador{additionalCollaborators > 1 ? 'es' : ''} 
-                                  {' '}(R$ {valuePerPerson.toFixed(2)} - {quantityPerPerson.toFixed(2)}Kg cada)
-                                </div>
-                              )
-                            })()}
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#666' }}>
-                            {purchaseDate.toLocaleDateString('pt-BR')}
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {purchaseDate.toLocaleDateString('pt-BR')}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                       
                       {product && (
                         <div style={{ marginBottom: '12px' }}>

@@ -130,8 +130,8 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 - **Slogan**: "Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional" (logo abaixo do logo, em itálico e tamanho menor)
 - **Foto do usuário**: Circular, clicável (vai para Settings)
 - **Nome do usuário**: Ao lado da foto
-- **Total de Contribuições**: Valor total já contribuído pelo usuário
-- **Total de KGs**: Quantidade total de café registrada pelo usuário
+- **Total de Contribuições**: Valor total já contribuído pelo usuário (considera a parte do usuário em contribuições rachadas)
+- **Total de KGs**: Quantidade total de café registrada pelo usuário (considera a parte do usuário em contribuições rachadas)
 - **Botão + (ADD)**: Expande para três opções:
   - Nova Contribuição (abre modal)
   - Votação (vai para `/votes`)
@@ -270,13 +270,18 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 ### Elementos
 - **Dados do usuário**: Edição de informações básicas (nome, foto)
+  - **Nome**: Editável (campo de texto)
+  - **Foto**: Editável (upload de arquivo ou link do Google Drive)
+  - **Email**: Apenas visualização (não editável)
 - **Se Admin**: Seção adicional com configurações do sistema
-  - Editar `calculationBaseMonths`
-  - Lista todas as configurações disponíveis
+  - Migração de saldos de todos os usuários
 
 ### Comportamento
+- Ao clicar "Editar", campos de nome e foto tornam-se editáveis
+- Foto pode ser atualizada via upload de arquivo ou link do Google Drive
 - Salvar alterações atualiza Firestore
 - Validações apropriadas
+- Após salvar, perfil é atualizado e modal de edição é fechado
 
 ---
 
@@ -335,8 +340,9 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
    - Permitir decimais
    - Obrigatório
 
-5. **Rachar compra**
+5. **Rachar compra (Vaquinha)**
    - Radio buttons: "Não" (padrão) / "Sim"
+   - **Disponível para todos os usuários** (não apenas admins)
    - Se "Sim":
      - Mostra lista de usuários ativos (exceto o comprador) para seleção
      - Usuários são selecionados/deselecionados clicando nos cards
@@ -474,7 +480,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 - **Lista de produtos**: Cards com foto, nome, média de rating
 - **Sistema de estrelas**: 5 estrelas clicáveis (0-5, permitindo meia estrela)
-- **Média exibida**: Média geral do produto
+- **Média exibida**: Média geral do produto (com uma casa decimal, arredondada para baixo)
 - **Highlight**: Produtos não votados pelo usuário destacados visualmente
 - **Filtros**: ✅ Implementado
   - Por nome (busca em tempo real)
@@ -494,7 +500,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 - Cada usuário vota apenas uma vez por produto
 - Se já votou, atualiza o voto existente
-- Arredondamento: Média sempre em meia estrela (0, 0.5, 1, ..., 5)
+- Arredondamento: Média sempre arredondada para baixo com uma casa decimal (ex: 4.12 = 4.1, 3.67 = 3.6)
 
 ---
 
@@ -532,7 +538,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 - **Informações exibidas nos cards**:
   - Foto e nome do usuário
-  - **Indicador de rachamento**: Para colaborações divididas (`isDivided: true`), mostra badge com "+{x} colaboradores (R$ {y} - {z}Kg cada)"
+  - **Indicador de rachamento**: Para colaborações divididas (`isDivided: true`), mostra imagens circulares lado a lado de todos os colaboradores (apenas bolinhas, sem nomes). Nome aparece em tooltip ao passar o mouse sobre a imagem
   - Data da compra
   - Nome do produto
   - Preço médio por kg do produto
@@ -548,7 +554,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - Se imagem não carregar, mostra link clicável
 
 - **Filtros**: ✅ Implementado
-  - Por usuário (dropdown)
+  - Por usuário (dropdown) - inclui contribuições onde o usuário é criador OU participa da rachadinha
   - Por produto (dropdown)
   - Por data inicial
   - Por data final
@@ -561,6 +567,10 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 - Ao editar e adicionar `arrivalEvidence` e `arrivalDate`:
   - Se produto não tem `photoURL`, usa `arrivalEvidence` como foto do produto
+- **Contribuições já compensadas**: 
+  - Se `purchaseDate <= data da última compensação`, a contribuição é considerada já compensada
+  - Um aviso é exibido no modal de edição informando que edições não afetarão o saldo
+  - Edições em contribuições já compensadas não atualizam os saldos dos usuários (apenas dados não relacionados ao saldo)
 
 ---
 
@@ -617,6 +627,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 ### Logo
 
 - **Ícone do menu**: Logo mini (logo_mini.png) substitui o emoji de xícara
+- **Texto ao lado do logo**: "meu Café Grão" em preto quando expandido
 - **Fundo**: Menu clareado com gradiente bege claro para melhor visibilidade do logo marrom
 
 ### Botões

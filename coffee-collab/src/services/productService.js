@@ -125,11 +125,12 @@ export async function updateProductAverageRating(productId) {
   const totalRating = productVotes.reduce((sum, v) => sum + (v.rating || 0), 0)
   const averageRating = totalRating / productVotes.length
   
-  // Round to nearest half star (0, 0.5, 1, 1.5, ..., 5)
-  const roundedRating = Math.round(averageRating * 2) / 2
+  // Round down to one decimal place (e.g., 4.12 = 4.1, 2.45 = 2.4)
+  const roundedRating = Math.floor(averageRating * 10) / 10
   
   await updateProduct(productId, { averageRating: roundedRating })
 }
+
 
 
 

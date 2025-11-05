@@ -35,10 +35,17 @@ export function TimelineChart({ contributions }) {
       monthlyData[monthKey].value += contrib.value || 0
     })
 
-    // Sort by month
-    const sortedMonths = Object.keys(monthlyData).sort()
+    // Sort by month (ensure proper date parsing)
+    const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
+      // Parse YYYY-MM format to compare dates properly
+      const dateA = new Date(a + '-01')
+      const dateB = new Date(b + '-01')
+      return dateA - dateB
+    })
     const months = sortedMonths.map(key => {
-      const date = new Date(key + '-01')
+      // Parse YYYY-MM format correctly
+      const [year, month] = key.split('-')
+      const date = new Date(parseInt(year), parseInt(month) - 1, 1)
       return date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
     })
     const kgData = sortedMonths.map(key => monthlyData[key].kg)
@@ -125,6 +132,7 @@ export function TimelineChart({ contributions }) {
     />
   )
 }
+
 
 
 

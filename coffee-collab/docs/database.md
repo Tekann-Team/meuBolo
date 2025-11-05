@@ -102,6 +102,7 @@ Quando `isDivided: true`, cada documento na subcollection representa um particip
 - `arrivalEvidence` e `arrivalDate` são opcionais inicialmente
 - Se `arrivalEvidence` for adicionada e o produto ainda não tiver foto, essa evidência vira a foto do produto
 - Ao atualizar uma contribuição de um produto existente, recalcular `averagePricePerKg` do produto
+- **Contribuições já compensadas**: Se `purchaseDate <= data da última compensação`, a contribuição é considerada já compensada. Edições em contribuições já compensadas não afetam o saldo dos usuários (apenas atualizam dados não relacionados ao saldo)
 - Se `isDivided: true`:
   - A quantidade e valor são divididos igualmente entre todos os participantes (incluindo o comprador)
   - Cada participante recebe `quantityKg / totalParticipantes` e `value / totalParticipantes`
@@ -129,13 +130,13 @@ Armazena produtos/cafés disponíveis no sistema.
   description: string | null,    // Descrição do produto
   photoURL: string | null,       // URL da foto do produto
   averagePricePerKg: number,     // Média de preço por KG (calculado automaticamente)
-  averageRating: number          // Média de pontuação (0-5, arredondada em meia estrela)
+  averageRating: number          // Média de pontuação (0-5, com uma casa decimal, arredondada para baixo)
 }
 ```
 
 **Regras de Negócio**:
 - `averagePricePerKg`: Calculado automaticamente somando todos os valores de contribuições para este produto e dividindo pela soma de todos os KGs
-- `averageRating`: Calculado automaticamente somando todas as pontuações e dividindo pelo total de votos (arredondado para meia estrela)
+- `averageRating`: Calculado automaticamente somando todas as pontuações e dividindo pelo total de votos (arredondado para baixo com uma casa decimal, ex: 4.12 = 4.1, 2.45 = 2.4)
 - Produtos criados automaticamente via modal de contribuição começam com:
   - `description: null`
   - `photoURL: null`
@@ -166,7 +167,7 @@ Armazena votos/avaliações dos usuários sobre os produtos.
 - Cada usuário pode votar apenas uma vez por produto
 - Se usuário votar novamente no mesmo produto, atualiza o voto existente (não cria novo)
 - Ao votar ou atualizar voto, recalcular `averageRating` do produto correspondente
-- `averageRating` = soma de todos os ratings / total de votos (arredondado para meia estrela)
+- `averageRating` = soma de todos os ratings / total de votos (arredondado para baixo com uma casa decimal)
 
 **Regras de Segurança**:
 - Leitura: Todos usuários autenticados
@@ -265,7 +266,7 @@ averageRating =
   COUNT(votes WHERE productId = X)
 ```
 
-**Arredondamento**: Sempre para meia estrela mais próxima (0, 0.5, 1, 1.5, ..., 5)
+**Arredondamento**: Sempre para baixo com uma casa decimal (ex: 4.12 = 4.1, 3.67 = 3.6, 2.45 = 2.4)
 
 **Quando recalcular**:
 - Ao criar novo voto

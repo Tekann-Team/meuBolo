@@ -370,10 +370,10 @@ export function Home() {
             >
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: '18px', color: '#8B4513', margin: '0 0 8px 0', fontWeight: 'bold' }}>
-                  📊 Menor saldo detectado!
+                  📊 Você ainda não contribuiu nesta rodada!
                 </h3>
                 <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>
-                  Você está na última posição (ou dividindo a última) no ranking de saldo. Você é o próximo da fila para comprar bolo!
+                  Você está na última posição (ou dividindo a última) no ranking de saldo. Você é o próximo da fila para comprar bolo! Galera tá com fome! Que tal começar a contribuir?
                   {(allUsers.find(u => u.id === user.uid)?.balance || 0) === 0 && ' Que tal começar a contribuir?'}
                 </p>
               </div>
@@ -460,17 +460,19 @@ export function Home() {
               👤 Quem ainda não contribuiu nesta rodada
             </h2>
             {newIndicators.usersWithoutContribution && newIndicators.usersWithoutContribution.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>
                 {newIndicators.usersWithoutContribution.map((user, index) => (
                   <div
                     key={user.userId || index}
                     style={{
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '12px',
+                      gap: '8px',
                       padding: '12px',
                       background: 'rgba(139, 69, 19, 0.05)',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      minWidth: '120px'
                     }}
                   >
                     <img
@@ -484,12 +486,12 @@ export function Home() {
                         objectFit: 'cover'
                       }}
                     />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '16px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '14px' }}>
                         {user.name}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                        Saldo: {user.balance.toFixed(2)} bolos
+                      <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                        Saldo: {user.balance.toFixed(2)} 🍰
                       </div>
                     </div>
                   </div>

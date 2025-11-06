@@ -37,10 +37,10 @@ export function Layout({ children }) {
         }}
       >
         <div style={{ color: '#FFF', fontSize: '14px' }}>
-          <strong>☕ meuCaféGrão</strong> - Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional
+          <strong>🍰 meuBolo</strong> - Base de Organização de Lanches Ocasionais
         </div>
         <div style={{ color: '#FFF', fontSize: '12px', opacity: 0.8 }}>
-          Feito com ❤️ e muito ☕ | {new Date().getFullYear()}
+          Feito com ❤️ e muito 🍰 | {new Date().getFullYear()}
         </div>
       </footer>
     </div>

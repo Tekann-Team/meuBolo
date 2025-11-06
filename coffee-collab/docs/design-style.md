@@ -79,7 +79,7 @@ O sistema utiliza um estilo **moderno, aconchegante (cozy) e tecnológico** com 
 
 - **Gradiente de fundo**: Tons quentes de café
 - **Tipografia destacada**: Nome do sistema bem visível
-- **Informações do usuário**: Foto, nome, totais (contribuições, KGs)
+- **Informações do usuário**: Foto, nome, totais (contribuições, bolos)
 - **Botões de ação**: Destacados mas não intrusivos
 
 ### Avisos (Alerts)
@@ -112,7 +112,7 @@ O sistema utiliza um estilo **moderno, aconchegante (cozy) e tecnológico** com 
 - **Barras coloridas**: Cada cor representa um usuário
 - **Ícones de usuário**: Sobre as barras ou na legenda
 - **Meses no eixo X**: Claros e legíveis
-- **KGs no eixo Y**: Escala adequada
+- **Bolos no eixo Y**: Escala adequada
 
 ---
 

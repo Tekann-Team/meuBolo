@@ -186,7 +186,7 @@ export function Products() {
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold', fontSize: '14px' }}>
-                    Preço Máximo (R$/kg)
+                    Preço Máximo (R$/🍰)
                   </label>
                   <input
                     type="number"
@@ -334,7 +334,7 @@ export function Products() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ color: '#8B4513', fontWeight: 'bold' }}>
-                      R$ {product.averagePricePerKg?.toFixed(2) || '0.00'}/kg
+                      R$ {product.averagePricePerKg?.toFixed(2) || '0.00'}/🍰
                     </div>
                     <div style={{ color: '#666', fontSize: '14px' }}>
                       {product.averageRating?.toFixed(1) || '0.0'} ⭐

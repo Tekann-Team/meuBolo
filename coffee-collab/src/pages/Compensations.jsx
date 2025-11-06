@@ -72,8 +72,8 @@ export function Compensations() {
               ℹ️ Como funciona o Saldo e as Compensações?
             </h3>
             <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.6', margin: 0 }}>
-              <strong>Saldo:</strong> Representa o quanto de café (em kg) cada colaborador ainda tem em contribuições positivas. 
-              Quando alguém compra café, o saldo aumenta. Quando uma compensação é feita, todos têm o mesmo valor reduzido do saldo.
+              <strong>Saldo:</strong> Representa o quanto de bolos cada colaborador ainda tem em contribuições positivas. 
+              Quando alguém compra bolo, o saldo aumenta. Quando uma compensação é feita, todos têm o mesmo valor reduzido do saldo.
               <br /><br />
               <strong>Compensação Automática:</strong> Quando todos os usuários ativos têm saldo maior que zero, uma compensação automática é disparada. 
               A compensação reduz o menor saldo de todos os usuários proporcionalmente.

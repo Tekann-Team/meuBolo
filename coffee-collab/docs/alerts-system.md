@@ -57,9 +57,9 @@ Os avisos aparecem na página **Home** (`/home`), logo abaixo do header, antes d
 **Como desaparece**: Quando outro usuário fica com saldo menor ou igual ao seu
 
 **Exemplo**:
-- Usuário A: saldo = 2.5 kg
-- Usuário B: saldo = 1.0 kg
-- Usuário C: saldo = 1.0 kg
+- Usuário A: saldo = 2.5 bolos
+- Usuário B: saldo = 1.0 bolos
+- Usuário C: saldo = 1.0 bolos
 - Usuários B e C verão o aviso (têm o menor saldo)
 
 **⚠️ IMPORTANTE**: Este aviso verifica o **SALDO** do usuário, não o total de contribuições. O saldo é calculado a partir da última compensação + contribuições após ela.

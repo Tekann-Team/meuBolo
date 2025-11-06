@@ -27,7 +27,7 @@ Esta migração substitui o sistema atual baseado em "Quantidade de Meses para B
 ```javascript
 {
   // ... campos existentes
-  balance: number,  // Saldo atual do usuário (em kg) - default: 0
+  balance: number,  // Saldo atual do usuário (em bolos) - default: 0
 }
 ```
 
@@ -38,7 +38,7 @@ Esta migração substitui o sistema atual baseado em "Quantidade de Meses para B
 {
   id: string,                    // ID único do documento
   date: Timestamp,               // Data da compensação
-  totalKg: number,               // Total de kg compensado
+  totalKg: number,               // Total de bolos compensado - campo mantido para compatibilidade
   createdAt: Timestamp,          // Data de criação
   updatedAt: Timestamp           // Data de atualização
 }
@@ -54,7 +54,7 @@ Cada documento na subcollection representa um usuário que participou da compens
   userName: string,               // Nome do usuário (para exibição)
   balanceBefore: number,         // Saldo antes da compensação
   balanceAfter: number,          // Saldo após a compensação
-  compensationKg: number          // Quantidade de kg compensada para este usuário
+  compensationKg: number          // Quantidade de bolos compensada para este usuário - campo mantido para compatibilidade
 }
 ```
 
@@ -65,8 +65,8 @@ Cada documento na subcollection representa um usuário que participou da compens
 ### Como o Saldo Funciona
 
 1. **Saldo Inicial**: Todo usuário começa com `balance: 0`
-2. **Ao Comprar Café**: O saldo aumenta com a quantidade comprada (`quantityKg`)
-   - Exemplo: User compra 1kg → `balance += 1`
+2. **Ao Comprar Bolo**: O saldo aumenta com a quantidade comprada (`quantityKg`)
+   - Exemplo: User compra 1 bolo → `balance += 1`
 3. **Compensação Automática**: Quando **todos os usuários ativos têm saldo > 0**, uma compensação é disparada automaticamente
 4. **Após Compensação**: O saldo de cada usuário é reduzido proporcionalmente
 
@@ -78,24 +78,24 @@ User 1: balance = 0
 User 2: balance = 0
 User 3: balance = 0
 
-User 1 compra 1kg:
+User 1 compra 1 bolo:
 User 1: balance = 1
 User 2: balance = 0
 User 3: balance = 0
 
-User 2 compra 0.5kg:
+User 2 compra 0.5 bolo:
 User 1: balance = 1
 User 2: balance = 0.5
 User 3: balance = 0
 
-User 3 compra 1kg:
+User 3 compra 1 bolo:
 User 1: balance = 1
 User 2: balance = 0.5
 User 3: balance = 1
 
 [Nenhum usuário tem saldo 0 → Dispara compensação automática]
 
-Compensação executada (total: 0.5kg - menor saldo):
+Compensação executada (total: 0.5 bolo - menor saldo):
 User 1: balance = 0.5 (era 1, reduziu 0.5)
 User 2: balance = 0 (era 0.5, reduziu 0.5)
 User 3: balance = 0.5 (era 1, reduziu 0.5)
@@ -106,7 +106,7 @@ Agora User 2 é o próximo da fila (tem saldo 0)
 ### Regras de Compensação
 
 1. **Trigger**: Quando todos os usuários ativos têm `balance > 0`
-2. **Quantidade**: A compensação remove o menor saldo entre todos os usuários
+2. **Quantidade**: A compensação remove o menor saldo (em bolos) entre todos os usuários
 3. **Proporcional**: Todos os usuários têm o mesmo valor reduzido (igual ao menor saldo)
 4. **Histórico**: Toda compensação é registrada em `compensations` com detalhes
 
@@ -153,8 +153,8 @@ Agora User 2 é o próximo da fila (tem saldo 0)
   1. Buscar todas as contribuições
   2. Buscar todas as compensações
   3. Para cada usuário:
-     - Calcular total de contribuições (soma de `quantityKg`)
-     - Calcular total de compensações (soma de `compensationKg` do usuário)
+     - Calcular total de contribuições (soma de `quantityKg` - representa bolos)
+     - Calcular total de compensações (soma de `compensationKg` do usuário - representa bolos)
      - `balance = totalContributions - totalCompensations`
   4. Atualizar `balance` de todos os usuários
 
@@ -247,15 +247,15 @@ newBalance = baseBalance + contributionsAfterCompensation
 
 ### Gráfico de Colaboradores
 
-**Antes**: Mostrava total de KGs nos últimos X meses
-**Depois**: Mostra saldo atual de cada colaborador
+**Antes**: Mostrava total de bolos nos últimos X meses
+**Depois**: Mostra saldo atual de cada colaborador (em bolos)
 
 **Título**: "Saldo dos Colaboradores"
 
 ### Próximo na Fila
 
-**Antes**: Usuário com menor total de KGs no período
-**Depois**: Usuário com menor saldo (ou saldo = 0)
+**Antes**: Usuário com menor total de bolos no período
+**Depois**: Usuário com menor saldo (ou saldo = 0) em bolos
 
 ### Alerta de Menor Contribuição
 

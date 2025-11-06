@@ -29,7 +29,7 @@ export function Home() {
     avgPerCollaborator: 0
   })
   const [newIndicators, setNewIndicators] = useState({
-    nextInQueue: null, // { name, photoURL, balance }
+    usersWithoutContribution: [], // Array of { name, photoURL, balance }
     avgSpendingPerActive: 0
   })
   const [allContributions, setAllContributions] = useState([])
@@ -127,19 +127,14 @@ export function Home() {
   }
 
   const calculateNewIndicators = (allContribs, users) => {
-    // 1. Próximo colaborador na fila (menor saldo)
+    // 1. Usuários que ainda não contribuíram nesta rodada (saldo = 0)
     const usersWithBalance = users.map(user => ({
       userId: user.id,
       name: user.name,
       photoURL: user.photoURL,
       balance: user.balance || 0
     }))
-    const sortedByBalance = [...usersWithBalance].sort((a, b) => a.balance - b.balance)
-    const nextInQueue = sortedByBalance.length > 0 ? {
-      name: sortedByBalance[0].name,
-      photoURL: sortedByBalance[0].photoURL,
-      balance: sortedByBalance[0].balance
-    } : null
+    const usersWithoutContribution = usersWithBalance.filter(user => user.balance === 0)
 
 
     // 3. Gasto médio por colaborador ativo (últimos 6 meses)
@@ -156,7 +151,7 @@ export function Home() {
     const avgSpendingPerActive = users.length > 0 ? totalValueInPeriod / users.length : 0
 
     setNewIndicators({
-      nextInQueue,
+      usersWithoutContribution,
       avgSpendingPerActive
     })
   }
@@ -271,10 +266,10 @@ export function Home() {
               <div>
                 <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '18px', marginBottom: '4px' }}>{profile.name}</div>
                 <div style={{ fontSize: '15px', color: '#666', marginBottom: '2px' }}>
-                  Saldo Atual: <strong>{(allUsers.find(u => u.id === user.uid)?.balance || 0).toFixed(2)} bolos</strong>
+                  Saldo Atual: <strong>{(allUsers.find(u => u.id === user.uid)?.balance || 0).toFixed(2)} 🍰</strong>
                 </div>
                 <div style={{ fontSize: '15px', color: '#666' }}>
-                  Total: <strong>R$ {userStats.totalValue.toFixed(2)}</strong> | <strong>{userStats.totalCakes.toFixed(2)} bolos</strong>
+                  Total: <strong>R$ {userStats.totalValue.toFixed(2)}</strong> | <strong>{userStats.totalCakes.toFixed(2)} 🍰</strong>
                 </div>
               </div>
             </div>
@@ -431,7 +426,7 @@ export function Home() {
               <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Média Consumo Mensal</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8B4513' }}>
-                  {indicators.avgMonthlyCakes.toFixed(2)} bolos
+                  {indicators.avgMonthlyCakes.toFixed(2)} 🍰
                 </div>
               </div>
               <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
@@ -452,7 +447,7 @@ export function Home() {
 
         {/* Dashboard Cards - Second Row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' }}>
-          {/* Próximo na Fila */}
+          {/* Quem ainda não contribuiu nesta rodada */}
           <div
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
@@ -462,32 +457,47 @@ export function Home() {
             }}
           >
             <h2 style={{ fontSize: '18px', color: '#8B4513', marginBottom: '16px' }}>
-              👤 Próximo na Fila
+              👤 Quem ainda não contribuiu nesta rodada
             </h2>
-            {newIndicators.nextInQueue ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                <img
-                  src={newIndicators.nextInQueue.photoURL || 'https://via.placeholder.com/64?text=☕'}
-                  alt={newIndicators.nextInQueue.name}
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    border: '2px solid #D2691E'
-                  }}
-                />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '16px' }}>
-                    {newIndicators.nextInQueue.name}
+            {newIndicators.usersWithoutContribution && newIndicators.usersWithoutContribution.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {newIndicators.usersWithoutContribution.map((user, index) => (
+                  <div
+                    key={user.userId || index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px',
+                      background: 'rgba(139, 69, 19, 0.05)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <img
+                      src={user.photoURL || 'https://via.placeholder.com/48?text=☕'}
+                      alt={user.name}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        border: '2px solid #D2691E',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', color: '#8B4513', fontSize: '16px' }}>
+                        {user.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                        Saldo: {user.balance.toFixed(2)} bolos
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                    Saldo: {newIndicators.nextInQueue.balance.toFixed(2)} bolos
-                  </div>
-                </div>
+                ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', color: '#666', fontSize: '14px' }}>
-                Sem dados suficientes
+                Todos já contribuíram nesta rodada! 🎉
               </div>
             )}
           </div>

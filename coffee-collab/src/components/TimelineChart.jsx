@@ -56,7 +56,7 @@ export function TimelineChart({ contributions }) {
         trigger: 'axis',
         formatter: (params) => {
           const param = params[0]
-          return `${param.name}<br/>${param.value.toFixed(2)} kg`
+          return `${param.name}<br/>${param.value.toFixed(2)} 🍰`
         }
       },
       grid: {
@@ -76,7 +76,7 @@ export function TimelineChart({ contributions }) {
       yAxis: {
         type: 'value',
         axisLabel: {
-          formatter: '{value} kg'
+          formatter: '{value} 🍰'
         }
       },
       series: [
@@ -92,7 +92,7 @@ export function TimelineChart({ contributions }) {
           label: {
             show: true,
             position: 'top',
-            formatter: '{c} kg'
+            formatter: '{c} 🍰'
           }
         }
       ]

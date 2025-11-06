@@ -52,20 +52,20 @@ export async function reprocessAllUserBalances() {
     }
     
     // 3b. Soma contribuições após compensação
-    let contributionsKg = 0
+    let contributionsCakes = 0
     for (const contrib of contributionsAfterCompensation) {
       if (contrib.isDivided) {
         // Para contribuições divididas, pega a parte do usuário
         const userDetail = contrib.details.find(d => d.userId === user.id)
-        contributionsKg += userDetail?.quantityKg || 0
+        contributionsCakes += userDetail?.quantityKg || 0 // quantityKg representa bolos
       } else if (contrib.userId === user.id) {
         // Contribuição regular - apenas o criador recebe
-        contributionsKg += contrib.quantityKg || 0
+        contributionsCakes += contrib.quantityKg || 0 // quantityKg representa bolos
       }
     }
     
-    // 3c. Novo saldo = saldo base + contribuições
-    const newBalance = Math.max(0, baseBalance + contributionsKg)
+    // 3c. Novo saldo = saldo base + contribuições (em bolos)
+    const newBalance = Math.max(0, baseBalance + contributionsCakes)
     
     // 3d. Atualiza apenas se mudou
     if (newBalance !== user.balance) {

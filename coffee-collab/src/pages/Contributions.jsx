@@ -543,7 +543,7 @@ export function Contributions() {
                           </div>
                           <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#666' }}>
                             <span>
-                              R$ {product.averagePricePerKg?.toFixed(2) || '0.00'}/kg
+                              R$ {product.averagePricePerKg?.toFixed(2) || '0.00'}/🍰
                             </span>
                             <span>
                               {product.averageRating?.toFixed(1) || '0.0'} ⭐
@@ -554,7 +554,7 @@ export function Contributions() {
                       
                       <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
                         <div style={{ color: '#666', fontSize: '14px' }}>
-                          Quantidade: <strong>{contribution.quantityKg?.toFixed(2) || 0} kg</strong>
+                          Quantidade: <strong>{contribution.quantityKg?.toFixed(2) || 0} 🍰</strong>
                         </div>
                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2d5016' }}>
                           R$ {contribution.value?.toFixed(2) || '0.00'}

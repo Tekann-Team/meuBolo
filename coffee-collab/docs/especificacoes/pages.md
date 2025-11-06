@@ -119,7 +119,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 │  CAFÉ GRÃO                    [Foto] João Silva   │
 │  Controle Automático de Fornecimento, Estoque...   │
 │  Total Contribuições: R$ 250,00                    │
-│  Total KGs: 5.5 kg                                  │
+│  Total: X bolos                                     │
 │                                                     │
 │  [+ Nova Contribuição | Votação | Novo Produto] [Sair] │
 └─────────────────────────────────────────────────────┘
@@ -131,7 +131,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 - **Foto do usuário**: Circular, clicável (vai para Settings)
 - **Nome do usuário**: Ao lado da foto
 - **Total de Contribuições**: Valor total já contribuído pelo usuário (considera a parte do usuário em contribuições rachadas)
-- **Total de KGs**: Quantidade total de café registrada pelo usuário (considera a parte do usuário em contribuições rachadas)
+- **Total de Bolos**: Quantidade total de bolos registrada pelo usuário (considera a parte do usuário em contribuições rachadas)
 - **Botão + (ADD)**: Expande para três opções:
   - Nova Contribuição (abre modal)
   - Votação (vai para `/votes`)
@@ -184,11 +184,10 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 **1. Lista de Colaboradores (Corrida de Barras)**
 
 - **Formato**: Gráfico de barras horizontal (ECharts)
-- **Dados**: Nome e total de KGs dos últimos X meses (baseado em `calculationBaseMonths`)
-- **Base de cálculo**: Apenas contribuições dentro de `calculationBaseMonths` meses
+- **Dados**: Nome e saldo atual de cada colaborador (em bolos)
 - **Visual**: Barras horizontais com cores diferentes (cada barra tem uma cor única em tons de marrom/café do tema do sistema)
-- **Ordenação**: Do maior para o menor contribuidor
-- **Tooltip**: Mostra nome e quantidade em kg ao passar o mouse
+- **Ordenação**: Do maior para o menor saldo
+- **Tooltip**: Mostra nome e quantidade em bolos ao passar o mouse
 - **Interatividade**: Hover mostra detalhes, labels mostram valores
 
 **2. Indicadores de Cafeína**
@@ -203,13 +202,13 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 │  └───────────────────────────────┘ │
 │                                     │
 │  ┌───────────────────────────────┐ │
-│  │ KGs Total Consumido            │ │
-│  │ 45.5 kg                        │ │
+│  │ Total de Bolos                 │ │
+│  │ 45.5 bolos                     │ │
 │  └───────────────────────────────┘ │
 │                                     │
 │  ┌───────────────────────────────┐ │
 │  │ Média Consumo Mensal           │ │
-│  │ 7.6 kg                         │ │
+│  │ 7.6 bolos                      │ │
 │  └───────────────────────────────┘ │
 │                                     │
 │  ┌───────────────────────────────┐ │
@@ -226,18 +225,31 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 
 - **Métricas** (exibidas em cards):
   - Valor total investido (soma de todas as contribuições)
-  - KGs total consumido (soma de todas as quantidades)
-  - Média de consumo mensal (média de KGs por mês com registro)
+  - Total de bolos (soma de todas as quantidades)
+  - Média de consumo mensal (média de bolos por mês com registro)
   - Média de investimento mensal (média de valores por mês com registro)
   - Média custo por colaborador (total investido / número de colaboradores ativos)
 
-**3. Linha do Tempo**
+**3. Quem ainda não contribuiu nesta rodada**
+
+- **Formato**: Card com lista de usuários
+- **Dados**: Todos os usuários ativos que têm saldo atual = 0 (ainda não contribuíram nesta rodada)
+- **Visual**: Lista de cards horizontais, cada um mostrando:
+  - Foto do usuário (circular, 48px)
+  - Nome do usuário
+  - Saldo atual (sempre 0.00 bolos para este card)
+- **Comportamento**:
+  - Se não houver usuários com saldo 0: Exibe mensagem "Todos já contribuíram nesta rodada! 🎉"
+  - Se houver usuários com saldo 0: Lista todos eles em cards individuais
+- **Lógica**: Filtra todos os usuários ativos onde `balance === 0`
+
+**4. Linha do Tempo**
 
 - **Gráfico de barras** (ECharts)
 - **Eixo X**: Meses
-- **Eixo Y**: Quantidade de KGs
+- **Eixo Y**: Quantidade de bolos
 - **Barras**: Cada cor representa um usuário, com imagem do usuário na barra
-- **Tooltip**: Mostra usuário, quantidade de KGs naquele mês
+- **Tooltip**: Mostra usuário, quantidade de bolos naquele mês
 - **Interatividade**: Zoom, hover com detalhes
 
 ---
@@ -339,7 +351,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
    - Formato monetário brasileiro
    - Obrigatório
 
-4. **Quantidade (KG)** *
+4. **Quantidade (bolos)** *
    - Input numérico
    - Permitir decimais
    - Obrigatório
@@ -395,11 +407,11 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
     - `averagePricePerKg`: valor / quantidadeKg
     - `averageRating`: 0
   - Se produto existente: Atualiza `averagePricePerKg` do produto (após criação bem-sucedida):
-    - Recalcula: soma todos os valores / soma todos os KGs
+    - Recalcula: soma todos os valores / soma todos os bolos
   - Cria documento em `contributions` com `isDivided` (false por padrão) **atomicamente**
   - Se `isDivided: true`:
     - Cria documentos na subcollection `contributionDetails` para cada participante **no mesmo batch**
-    - Divide `quantityKg` e `value` igualmente entre todos os participantes (incluindo comprador)
+    - Divide `quantityKg` (bolos) e `value` igualmente entre todos os participantes (incluindo comprador)
     - Atualiza saldo de todos os participantes com a quantidade atribuída (após batch bem-sucedido)
   - Se `isDivided: false`:
     - Atualiza apenas o saldo do comprador com a quantidade total (após batch bem-sucedido)
@@ -536,7 +548,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 │                                     │
 │  ┌─────────────────────────────┐   │
 │  │ João Silva - 15/12/2024      │   │
-│  │ Café Expresso - 5.0 kg       │   │
+│  │ Café Expresso - 5.0 bolos    │   │
 │  │ R$ 250,00                    │   │
 │  │ [Evidências] [Editar]        │   │
 │  └─────────────────────────────┘   │
@@ -556,9 +568,9 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - **Indicador de rachamento**: Para colaborações divididas (`isDivided: true`), mostra imagens circulares lado a lado de todos os colaboradores (apenas bolinhas, sem nomes). Nome aparece em tooltip ao passar o mouse sobre a imagem
   - Data da compra
   - Nome do produto
-  - Preço médio por kg do produto
+  - Preço médio por bolo do produto
   - Avaliação em estrelas do produto
-  - Quantidade comprada (kg)
+  - Quantidade comprada (bolos)
   - Valor total da compra
   - Botão "Evidências" (mostra/oculta evidências de compra e chegada quando disponíveis)
 
@@ -606,7 +618,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 │                                     │
 │  ┌─────────────────────────────┐   │
 │  │ [Foto] Café Expresso        │   │
-│  │ Média: R$ 50,00/kg          │   │
+│  │ Média: R$ 50,00/bolo        │   │
 │  │ Rating: 4.5 ⭐              │   │
 │  │ [Editar]                    │   │
 │  └─────────────────────────────┘   │
@@ -624,7 +636,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 - **Filtros**: ✅ Implementado
   - Por nome (busca em tempo real)
   - Por rating mínimo
-  - Por preço máximo (R$/kg)
+  - Por preço máximo (R$/bolo)
 - **Ordenação**: ✅ Implementado
   - Por nome (crescente/decrescente)
   - Por rating (crescente/decrescente)

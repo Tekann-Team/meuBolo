@@ -31,7 +31,7 @@ export function TimelineChart({ contributions }) {
         }
       }
       
-      monthlyData[monthKey].kg += contrib.quantityKg || 0
+      monthlyData[monthKey].kg += contrib.quantityCakes || contrib.quantityKg || 0
       monthlyData[monthKey].value += contrib.value || 0
     })
 

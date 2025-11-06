@@ -130,7 +130,7 @@ export function Contributions() {
       } else if (sortField === 'value') {
         comparison = (a.value || 0) - (b.value || 0)
       } else if (sortField === 'quantity') {
-        comparison = (a.quantityKg || 0) - (b.quantityKg || 0)
+        comparison = (a.quantityCakes || a.quantityKg || 0) - (b.quantityCakes || b.quantityKg || 0)
       }
       
       return sortDirection === 'asc' ? comparison : -comparison
@@ -554,7 +554,7 @@ export function Contributions() {
                       
                       <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
                         <div style={{ color: '#666', fontSize: '14px' }}>
-                          Quantidade: <strong>{contribution.quantityKg?.toFixed(2) || 0} 🍰</strong>
+                          Quantidade: <strong>{(contribution.quantityCakes || contribution.quantityKg || 0).toFixed(2)} 🍰</strong>
                         </div>
                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2d5016' }}>
                           R$ {contribution.value?.toFixed(2) || '0.00'}

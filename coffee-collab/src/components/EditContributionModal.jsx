@@ -116,8 +116,8 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!purchaseDate || !value || (!purchaseEvidenceFile && !purchaseEvidenceURL)) {
-      alert('Preencha todos os campos obrigatórios (incluindo evidência de compra)')
+    if (!purchaseDate || !value) {
+      alert('Preencha todos os campos obrigatórios')
       return
     }
 

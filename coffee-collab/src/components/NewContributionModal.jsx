@@ -87,8 +87,8 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!purchaseDate || !value || (!purchaseEvidenceFile && !purchaseEvidenceLink)) {
-      alert('Preencha todos os campos obrigatórios (incluindo evidência de compra)')
+    if (!purchaseDate || !value) {
+      alert('Preencha todos os campos obrigatórios')
       return
     }
 
@@ -450,7 +450,7 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Evidência Compra *
+                Evidência Compra
               </label>
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666' }}>
                 Selecione um arquivo para upload automático (ou cole o link do Google Drive se preferir manual)

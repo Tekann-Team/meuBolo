@@ -98,7 +98,7 @@ Quando `isDivided: true`, cada documento na subcollection representa um particip
 ```
 
 **Regras de Negócio**:
-- Ao criar contribuição, `purchaseEvidence` é obrigatório
+- Ao criar contribuição, `purchaseEvidence` é opcional
 - `arrivalEvidence` e `arrivalDate` são opcionais inicialmente
 - Se `arrivalEvidence` for adicionada e o produto ainda não tiver foto, essa evidência vira a foto do produto
 - Ao atualizar uma contribuição de um produto existente, recalcular `averagePricePerKg` do produto (campo mantido para compatibilidade, mas representa preço por bolo)

@@ -327,7 +327,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
 │  Café/Produto: [____] *             │
 │  (Busca com filtro em tempo real)   │
 │                                     │
-│  Evidência Compra: [Upload] *       │
+│  Evidência Compra: [Upload]         │
 │  Evidência Chegada: [Upload]        │
 │  Data Chegada: [DD/MM/AAAA]         │
 │                                     │
@@ -378,11 +378,11 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
    - Se digitar nome novo (sem selecionar): cria produto automaticamente ao salvar
    - **Prevenção de duplicatas**: Ao selecionar um produto, a lista é ocultada para evitar confusão
 
-7. **Evidência Compra** *
+7. **Evidência Compra**
    - Campo de texto para colar link do Google Drive OU
    - Upload de arquivo (upload automático ainda não configurado)
    - Preview da imagem selecionada ou confirmação do link
-   - Obrigatório: ou link do Google Drive ou arquivo
+   - Opcional
 
 8. **Evidência Chegada**
    - Campo de texto para colar link do Google Drive OU
@@ -419,10 +419,11 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - **Validações de segurança**: Usuários devem estar ativos (`isActive: true`) para criar contribuições
 
 - **Validações**:
-  - Campos obrigatórios (*)
+  - Campos obrigatórios (*): Data Compra, Valor
   - Data compra não pode ser futura
   - Data chegada não pode ser anterior à data compra
-  - Valor e quantidade devem ser > 0
+  - Valor deve ser > 0
+  - Quantidade é calculada automaticamente a partir do valor e do valor do bolo configurado
 
 ---
 

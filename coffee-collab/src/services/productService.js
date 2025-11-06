@@ -103,7 +103,7 @@ export async function updateProductAveragePrice(productId) {
   }
   
   const totalValue = productContributions.reduce((sum, c) => sum + (c.value || 0), 0)
-  const totalKg = productContributions.reduce((sum, c) => sum + (c.quantityKg || 0), 0)
+  const totalKg = productContributions.reduce((sum, c) => sum + (c.quantityCakes || c.quantityKg || 0), 0)
   
   const averagePricePerKg = totalKg > 0 ? totalValue / totalKg : 0
   

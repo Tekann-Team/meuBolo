@@ -75,21 +75,21 @@ export function Inactive() {
           }}
         >
           <h1 style={{ fontSize: '32px', color: '#8B4513', marginBottom: '16px' }}>
-            ☕ Espera aí, meu chapa!
+            🎂 Espera aí, meu chapa!
           </h1>
           <div style={{ fontSize: '18px', color: '#666', lineHeight: '1.8', marginBottom: '24px' }}>
             <p style={{ marginBottom: '16px' }}>
-              Você foi cadastrado no sistema CAFÉ GRÃO, mas ainda precisa ser ativado por um administrador. 
-              É tipo quando você vai fazer café e esquece que não comprou os grãos ainda... a espera é real! 😅
+              Você foi cadastrado no sistema meuBolo, mas ainda precisa ser ativado por um administrador. 
+              É tipo quando você vai fazer um bolo e esquece que não comprou os ingredientes ainda... a espera é real! 😅
             </p>
             <p style={{ marginBottom: '16px', fontStyle: 'italic' }}>
-              "A melhor forma de esperar é... esperando com um cafezinho na mão!" ☕
+              "A melhor forma de esperar é... esperando com um pedaço de bolo na mão!" 🍰
               <br />
-              Mas como você não pode fazer café ainda, vai ter que esperar mesmo! 🤷‍♂️
+              Mas como você não pode fazer bolo ainda, vai ter que esperar mesmo! 🤷‍♂️
             </p>
             <p style={{ marginBottom: '16px' }}>
               Enquanto isso, aproveite para conhecer nosso time de administradores que controlam quem pode 
-              contribuir para nosso estoque de café! Eles são tipo os baristas chefes do sistema. 👨‍🍳
+              contribuir para nosso estoque de bolos! Eles são tipo os confeiteiros chefes do sistema. 👨‍🍳
             </p>
             <p style={{ fontWeight: 'bold', color: '#8B4513' }}>
               Fica de olho! Assim que um deles te ativar, você já pode começar a registrar suas contribuições! 🚀
@@ -160,7 +160,7 @@ export function Inactive() {
                   }}
                 >
                   <img
-                    src={admin.photoURL || 'https://via.placeholder.com/64?text=☕'}
+                    src={admin.photoURL || 'https://via.placeholder.com/64?text=🎂'}
                     alt={admin.name}
                     style={{
                       width: '64px',

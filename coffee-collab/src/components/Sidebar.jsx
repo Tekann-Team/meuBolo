@@ -7,8 +7,6 @@ const menuItems = [
   { path: '/home', icon: '🏠', label: 'Home' },
   { path: '/contributions', icon: '📝', label: 'Contribuições' },
   { path: '/compensations', icon: '⚖️', label: 'Compensações' },
-  { path: '/votes', icon: '⭐', label: 'Votações' },
-  { path: '/products', icon: '🏷️', label: 'Produtos' },
   { path: '/settings', icon: '⚙️', label: 'Settings' },
   { path: '/users', icon: '👥', label: 'Usuários', adminOnly: true }
 ]
@@ -52,8 +50,8 @@ export function Sidebar() {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <img 
-          src={`${import.meta.env.BASE_URL}logo_mini.png`}
-          alt="CAFÉ GRÃO" 
+          src={`${import.meta.env.BASE_URL}meuBolo_logo_mini.png`}
+          alt="meuBolo" 
           style={{ 
             width: '56px', 
             height: '56px',
@@ -64,7 +62,7 @@ export function Sidebar() {
         />
         {isExpanded && (
           <span style={{ color: '#332518', fontWeight: 'bold', fontSize: '14px' }}>
-            meuCaféGrão
+            meuBolo
           </span>
         )}
       </div>

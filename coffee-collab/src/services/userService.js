@@ -60,13 +60,28 @@ export async function getOrCreateUserProfile(user) {
  * Get user profile by ID
  */
 export async function getUserProfile(userId) {
-  const userRef = doc(db, 'users', userId)
-  const userSnap = await getDoc(userRef)
-  
-  if (userSnap.exists()) {
-    return { id: userSnap.id, ...userSnap.data() }
+  try {
+    const userRef = doc(db, 'users', userId)
+    const userSnap = await getDoc(userRef)
+    
+    console.log('getUserProfile:', {
+      userId,
+      exists: userSnap.exists(),
+      data: userSnap.exists() ? userSnap.data() : null
+    })
+    
+    if (userSnap.exists()) {
+      const profileData = { id: userSnap.id, ...userSnap.data() }
+      console.log('getUserProfile - Profile data:', profileData)
+      return profileData
+    }
+    
+    console.warn('getUserProfile - Document does not exist for userId:', userId)
+    return null
+  } catch (error) {
+    console.error('getUserProfile - Error:', error)
+    throw error
   }
-  return null
 }
 
 /**
@@ -174,7 +189,7 @@ export async function reprocessAllUserBalances() {
     }
     
     // Calculate contributions after last compensation for this user
-    let contributionsKg = 0
+    let contributionsCakes = 0
     
     for (const contrib of contributionsAfterCompensation) {
       if (contrib.isDivided) {
@@ -183,7 +198,8 @@ export async function reprocessAllUserBalances() {
           const details = await getContributionDetails(contrib.id)
           const userDetail = details.find(d => d.userId === user.id)
           if (userDetail) {
-            contributionsKg += userDetail.quantityKg || 0
+            // Support both old (quantityKg) and new (quantityCakes) format for migration
+            contributionsCakes += userDetail.quantityCakes || userDetail.quantityKg || 0
           }
         } catch (error) {
           console.error(`Error loading details for contribution ${contrib.id}:`, error)
@@ -191,13 +207,14 @@ export async function reprocessAllUserBalances() {
       } else {
         // Regular contribution - only creator gets the full amount
         if (contrib.userId === user.id) {
-          contributionsKg += contrib.quantityKg || 0
+          // Support both old (quantityKg) and new (quantityCakes) format for migration
+          contributionsCakes += contrib.quantityCakes || contrib.quantityKg || 0
         }
       }
     }
     
     // Calculate new balance
-    const newBalance = Math.max(0, baseBalance + contributionsKg)
+    const newBalance = Math.max(0, baseBalance + contributionsCakes)
     const currentBalance = user.balance || 0
     
     // Only update if balance changed

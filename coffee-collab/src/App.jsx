@@ -9,10 +9,8 @@ import { Landing } from './pages/Landing'
 import { Inactive } from './pages/Inactive'
 import { Home } from './pages/Home'
 import { Settings } from './pages/Settings'
-import { Votes } from './pages/Votes'
 import { Contributions } from './pages/Contributions'
 import { Compensations } from './pages/Compensations'
-import { Products } from './pages/Products'
 import { Users } from './pages/Users'
 
 export function App() {
@@ -37,7 +35,7 @@ export function App() {
   }
 
   return (
-    <BrowserRouter basename={import.meta.env.MODE === 'production' ? '/cafe_grao' : undefined}>
+    <BrowserRouter basename={import.meta.env.MODE === 'production' ? '/meuBolo' : undefined}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
@@ -69,22 +67,6 @@ export function App() {
           element={
             <ProtectedRoute requireActive>
               <Compensations />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/votes"
-          element={
-            <ProtectedRoute requireActive>
-              <Votes />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/products"
-          element={
-            <ProtectedRoute requireActive>
-              <Products />
             </ProtectedRoute>
           }
         />

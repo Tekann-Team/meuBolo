@@ -15,9 +15,9 @@ import {
   writeBatch
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import { updateProductAveragePrice } from './productService'
 import { getUserProfile, updateUserProfile } from './userService'
 import { shouldTriggerCompensation, executeAutomaticCompensation } from './compensationService'
+import { getCakeValue } from './configurationService'
 
 /**
  * Create a new contribution with atomicity
@@ -28,6 +28,12 @@ export async function createContribution(contributionData) {
   const participantUserIds = contributionData.participantUserIds || []
   
   try {
+    // Get cake value to calculate quantity
+    const cakeValue = await getCakeValue()
+    
+    // Calculate quantity of cakes based on value
+    const quantityCakes = contributionData.value / cakeValue
+    
     // Prepare data before batch operations
     const contributionsRef = collection(db, 'contributions')
     const contributionId = doc(contributionsRef).id // Generate ID upfront
@@ -36,13 +42,9 @@ export async function createContribution(contributionData) {
       userId: contributionData.userId,
       purchaseDate: Timestamp.fromDate(new Date(contributionData.purchaseDate)),
       value: contributionData.value,
-      quantityKg: contributionData.quantityKg,
-      productId: contributionData.productId,
+      quantityCakes: quantityCakes,
+      cakeValue: cakeValue, // Save cake value at time of contribution
       purchaseEvidence: contributionData.purchaseEvidence || null,
-      arrivalEvidence: contributionData.arrivalEvidence || null,
-      arrivalDate: contributionData.arrivalDate 
-        ? Timestamp.fromDate(new Date(contributionData.arrivalDate))
-        : null,
       isDivided: isDivided,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -69,7 +71,7 @@ export async function createContribution(contributionData) {
       // All participants including the buyer
       const allParticipants = [...new Set([contributionData.userId, ...participantUserIds])]
       const totalParticipants = allParticipants.length
-      const quantityPerPerson = contributionData.quantityKg / totalParticipants
+      const quantityPerPerson = quantityCakes / totalParticipants
       const valuePerPerson = contributionData.value / totalParticipants
       
       // Create contribution details subcollection
@@ -85,7 +87,7 @@ export async function createContribution(contributionData) {
           batch.set(detailRef, {
             userId: userId,
             userName: userProfile.name || 'Usuário desconhecido',
-            quantityKg: quantityPerPerson,
+            quantityCakes: quantityPerPerson,
             value: valuePerPerson,
             createdAt: serverTimestamp()
           })
@@ -96,38 +98,42 @@ export async function createContribution(contributionData) {
     // Commit batch atomically - all or nothing
     await batch.commit()
     
-    // After successful batch commit, update product average price
-    // This is done outside the batch because it requires reading all contributions
-    try {
-      await updateProductAveragePrice(contributionData.productId)
-    } catch (error) {
-      console.error('Error updating product average price:', error)
-      // Don't fail the whole operation if product update fails
-    }
-    
     // Reprocess all user balances to ensure accuracy
     // This recalculates from last compensation + contributions after it
+    // IMPORTANT: Wait for reprocessing to complete before returning
+    // This ensures the balance is updated when the UI refreshes
     try {
       const { reprocessAllUserBalances } = await import('./userService')
-      await reprocessAllUserBalances()
+      const result = await reprocessAllUserBalances()
+      console.log('Balance reprocessing result:', result.message)
     } catch (error) {
       console.error('Error reprocessing balances:', error)
+      // Log detailed error for debugging
+      console.error('Balance reprocessing error details:', {
+        message: error.message,
+        stack: error.stack
+      })
       // Don't fail the whole operation if balance reprocessing fails
-      // The balance will be corrected on next reprocessing
+      // But log the error clearly so it can be debugged
+      // The balance will be corrected on next reprocessing or manual trigger
     }
     
     // Check if compensation should be triggered
+    let compensationCreated = false
     try {
       const shouldTrigger = await shouldTriggerCompensation()
       if (shouldTrigger) {
-        await executeAutomaticCompensation()
+        const compensationId = await executeAutomaticCompensation()
+        if (compensationId) {
+          compensationCreated = true
+        }
       }
     } catch (error) {
       console.error('Error checking/executing compensation:', error)
       // Don't fail the whole operation if compensation check fails
     }
     
-    return contributionId
+    return { contributionId, compensationCreated }
   } catch (error) {
     console.error('Error creating contribution:', error)
     throw new Error(`Erro ao criar contribuição: ${error.message}`)
@@ -243,17 +249,25 @@ export async function updateContribution(contributionId, updates) {
   try {
     const contributionRef = doc(db, 'contributions', contributionId)
     
+    // Get cake value for calculation
+    const cakeValue = await getCakeValue()
+    
+    // Calculate quantityCakes if value is being updated
+    let quantityCakes = contribution.quantityCakes || 0
     const updateData = {
       ...updates,
       updatedAt: serverTimestamp()
     }
     
+    if (updates.value !== undefined) {
+      quantityCakes = updates.value / cakeValue
+      updateData.quantityCakes = quantityCakes
+      updateData.cakeValue = cakeValue // Save cake value at time of update
+    }
+    
     // Convert dates to Timestamps if present
     if (updates.purchaseDate) {
       updateData.purchaseDate = Timestamp.fromDate(new Date(updates.purchaseDate))
-    }
-    if (updates.arrivalDate) {
-      updateData.arrivalDate = Timestamp.fromDate(new Date(updates.arrivalDate))
     }
     
     const isDivided = updates.isDivided !== undefined ? updates.isDivided : (contribution.isDivided || false)
@@ -290,9 +304,9 @@ export async function updateContribution(contributionId, updates) {
       // Create new details
       const allParticipants = [...new Set([contribution.userId, ...participantUserIds])]
       const totalParticipants = allParticipants.length
-      const quantityKg = updates.quantityKg !== undefined ? updates.quantityKg : contribution.quantityKg
+      const currentQuantityCakes = updates.value !== undefined ? quantityCakes : (contribution.quantityCakes || 0)
       const value = updates.value !== undefined ? updates.value : contribution.value
-      const quantityPerPerson = quantityKg / totalParticipants
+      const quantityPerPerson = currentQuantityCakes / totalParticipants
       const valuePerPerson = value / totalParticipants
       
       const newDetailsRef = collection(db, 'contributions', contributionId, 'contributionDetails')
@@ -306,7 +320,7 @@ export async function updateContribution(contributionId, updates) {
           batch.set(detailRef, {
             userId: userId,
             userName: userProfile.name || 'Usuário desconhecido',
-            quantityKg: quantityPerPerson,
+            quantityCakes: quantityPerPerson,
             value: valuePerPerson,
             createdAt: serverTimestamp()
           })
@@ -334,53 +348,43 @@ export async function updateContribution(contributionId, updates) {
     // Commit batch atomically - all or nothing
     await batch.commit()
     
-    // After successful batch commit, update product average price if needed
-    if (updates.value !== undefined || updates.quantityKg !== undefined) {
-      try {
-        await updateProductAveragePrice(contribution.productId)
-      } catch (error) {
-        console.error('Error updating product average price:', error)
-        // Don't fail the whole operation if product update fails
-      }
-    }
-    
-    // If arrivalEvidence was added and product has no photo, use it as product photo
-    if (updates.arrivalEvidence) {
-      try {
-        const { getProductById, updateProduct } = await import('./productService')
-        const product = await getProductById(contribution.productId)
-        if (product && !product.photoURL) {
-          await updateProduct(contribution.productId, { photoURL: updates.arrivalEvidence })
-        }
-      } catch (error) {
-        console.error('Error updating product photo:', error)
-        // Don't fail the whole operation if product photo update fails
-      }
-    }
-    
     // Reprocess all user balances to ensure accuracy (only if not skipping balance update)
     // This recalculates from last compensation + contributions after it
+    // IMPORTANT: Wait for reprocessing to complete before returning
     if (!skipBalanceUpdate) {
       try {
         const { reprocessAllUserBalances } = await import('./userService')
-        await reprocessAllUserBalances()
+        const result = await reprocessAllUserBalances()
+        console.log('Balance reprocessing result:', result.message)
       } catch (error) {
         console.error('Error reprocessing balances:', error)
+        // Log detailed error for debugging
+        console.error('Balance reprocessing error details:', {
+          message: error.message,
+          stack: error.stack
+        })
         // Don't fail the whole operation if balance reprocessing fails
-        // The balance will be corrected on next reprocessing
+        // But log the error clearly so it can be debugged
+        // The balance will be corrected on next reprocessing or manual trigger
       }
     }
     
     // Check if compensation should be triggered
+    let compensationCreated = false
     try {
       const shouldTrigger = await shouldTriggerCompensation()
       if (shouldTrigger) {
-        await executeAutomaticCompensation()
+        const compensationId = await executeAutomaticCompensation()
+        if (compensationId) {
+          compensationCreated = true
+        }
       }
     } catch (error) {
       console.error('Error checking/executing compensation:', error)
       // Don't fail the whole operation if compensation check fails
     }
+    
+    return { compensationCreated }
   } catch (error) {
     console.error('Error updating contribution:', error)
     throw new Error(`Erro ao atualizar contribuição: ${error.message}`)
@@ -406,8 +410,6 @@ export async function deleteContribution(contributionId) {
       })
       await batch.commit()
     }
-    
-    await updateProductAveragePrice(contribution.productId)
   }
   
   await deleteDoc(contributionRef)
@@ -418,20 +420,3 @@ export async function deleteContribution(contributionId) {
   await reprocessAllUserBalances()
 }
 
-/**
- * Get contributions missing arrival data for a user
- */
-export async function getContributionsMissingArrival(userId) {
-  const contributionsRef = collection(db, 'contributions')
-  const q = query(
-    contributionsRef,
-    where('userId', '==', userId),
-    orderBy('purchaseDate', 'desc')
-  )
-  
-  const querySnapshot = await getDocs(q)
-  
-  return querySnapshot.docs
-    .map(doc => ({ id: doc.id, ...doc.data() }))
-    .filter(contrib => !contrib.arrivalEvidence || !contrib.arrivalDate)
-}

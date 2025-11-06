@@ -128,7 +128,7 @@ export function Compensations() {
                       Compensação de {formatDate(compensation.date)}
                     </h3>
                     <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>
-                      Total compensado: <strong>{compensation.totalKg.toFixed(2)} kg</strong>
+                      Total compensado: <strong>{(compensation.totalCakes || compensation.totalKg || 0).toFixed(2)} bolos</strong>
                     </p>
                   </div>
                   <div style={{ fontSize: '24px', color: '#8B4513' }}>
@@ -161,12 +161,12 @@ export function Compensations() {
                               {detail.userName}
                             </div>
                             <div style={{ fontSize: '12px', color: '#666' }}>
-                              Saldo anterior: {detail.balanceBefore.toFixed(2)} kg → 
-                              Saldo final: {detail.balanceAfter.toFixed(2)} kg
+                              Saldo anterior: {(detail.balanceBefore || 0).toFixed(2)} bolos → 
+                              Saldo final: {(detail.balanceAfter || 0).toFixed(2)} bolos
                             </div>
                           </div>
                           <div style={{ fontSize: '14px', color: '#8B4513', fontWeight: 'bold' }}>
-                            -{detail.compensationKg.toFixed(2)} kg
+                            -{(detail.compensationCakes || detail.compensationKg || 0).toFixed(2)} bolos
                           </div>
                         </div>
                       ))}

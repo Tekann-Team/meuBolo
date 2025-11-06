@@ -13,6 +13,7 @@ import {
 import { db } from '../lib/firebase'
 
 const DEFAULT_CALCULATION_MONTHS = 6
+const DEFAULT_CAKE_VALUE = 25.0
 
 /**
  * Get configuration by name
@@ -34,6 +35,14 @@ export async function getConfiguration(name) {
       name: 'calculationBaseMonths',
       description: 'Quantidade de meses para base de cálculo de contribuições',
       value: DEFAULT_CALCULATION_MONTHS
+    }
+  }
+  
+  if (name === 'cakeValue') {
+    return {
+      name: 'cakeValue',
+      description: 'Valor do bolo em reais (R$)',
+      value: DEFAULT_CAKE_VALUE
     }
   }
   
@@ -101,6 +110,32 @@ export async function setCalculationBaseMonths(months) {
       'calculationBaseMonths',
       'Quantidade de meses para base de cálculo de contribuições',
       months
+    )
+  }
+}
+
+/**
+ * Get cake value (convenience function)
+ */
+export async function getCakeValue() {
+  const config = await getConfiguration('cakeValue')
+  return config ? config.value : DEFAULT_CAKE_VALUE
+}
+
+/**
+ * Set cake value (convenience function)
+ */
+export async function setCakeValue(value) {
+  const config = await getConfiguration('cakeValue')
+  
+  if (config && config.id) {
+    await updateConfiguration(config.id, value)
+  } else {
+    // Create if doesn't exist
+    await getOrCreateConfiguration(
+      'cakeValue',
+      'Valor do bolo em reais (R$)',
+      value
     )
   }
 }

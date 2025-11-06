@@ -8,7 +8,8 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  Timestamp
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { getActiveUsers, updateUserProfile } from './userService'
@@ -16,13 +17,16 @@ import { getActiveUsers, updateUserProfile } from './userService'
 /**
  * Create a new compensation
  */
-export async function createCompensation(date, totalKg, details) {
+export async function createCompensation(date, totalCakes, details) {
   const compensationsRef = collection(db, 'compensations')
+  
+  // Convert date to Timestamp if it's a Date object
+  const dateTimestamp = date instanceof Date ? Timestamp.fromDate(date) : date
   
   // Create compensation document
   const compensationDoc = await addDoc(compensationsRef, {
-    date: date,
-    totalKg: totalKg,
+    date: dateTimestamp,
+    totalCakes: totalCakes,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   })
@@ -38,7 +42,7 @@ export async function createCompensation(date, totalKg, details) {
       userName: detail.userName,
       balanceBefore: detail.balanceBefore,
       balanceAfter: detail.balanceAfter,
-      compensationKg: detail.compensationKg
+      compensationCakes: detail.compensationCakes
     })
   }
 
@@ -174,7 +178,7 @@ export async function executeAutomaticCompensation() {
     userName: user.name,
     balanceBefore: user.balance || 0,
     balanceAfter: (user.balance || 0) - minBalance,
-    compensationKg: minBalance
+    compensationCakes: minBalance
   }))
 
   // Update user balances

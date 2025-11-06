@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   // Usa base apenas em produção (GitHub Pages)
   // Em desenvolvimento local, base é '/' (raiz)
-  base: mode === 'production' ? '/cafe_grao/' : '/',
+  base: mode === 'production' ? '/meuBolo/' : '/',
 }))
 
 

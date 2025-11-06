@@ -580,9 +580,14 @@ export function Contributions() {
                                     cursor: 'pointer',
                                     objectFit: 'contain'
                                   }}
-                                  onClick={() => window.open(ensureImageUrl(contribution.purchaseEvidence), '_blank')}
+                                  onClick={() => {
+                                    const viewUrl = ensureImageUrl(contribution.purchaseEvidence, true)
+                                    window.open(viewUrl, '_blank')
+                                  }}
                                   onError={(e) => {
-                                    e.target.parentElement.innerHTML = `<a href="${contribution.purchaseEvidence}" target="_blank" style="color: #8B4513; text-decoration: underline;">Ver evidência de compra</a>`
+                                    // If image fails to load, show a clickable link instead
+                                    const viewUrl = ensureImageUrl(contribution.purchaseEvidence, true)
+                                    e.target.parentElement.innerHTML = `<a href="${viewUrl}" target="_blank" style="color: #8B4513; text-decoration: underline; font-weight: bold;">🔗 Ver evidência de compra (clique aqui)</a>`
                                   }}
                                 />
                               </div>
@@ -602,9 +607,14 @@ export function Contributions() {
                                     cursor: 'pointer',
                                     objectFit: 'contain'
                                   }}
-                                  onClick={() => window.open(ensureImageUrl(contribution.arrivalEvidence), '_blank')}
+                                  onClick={() => {
+                                    const viewUrl = ensureImageUrl(contribution.arrivalEvidence, true)
+                                    window.open(viewUrl, '_blank')
+                                  }}
                                   onError={(e) => {
-                                    e.target.parentElement.innerHTML = `<a href="${contribution.arrivalEvidence}" target="_blank" style="color: #8B4513; text-decoration: underline;">Ver evidência de chegada</a>`
+                                    // If image fails to load, show a clickable link instead
+                                    const viewUrl = ensureImageUrl(contribution.arrivalEvidence, true)
+                                    e.target.parentElement.innerHTML = `<a href="${viewUrl}" target="_blank" style="color: #8B4513; text-decoration: underline; font-weight: bold;">🔗 Ver evidência de chegada (clique aqui)</a>`
                                   }}
                                 />
                               </div>

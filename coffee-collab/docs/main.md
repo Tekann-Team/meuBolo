@@ -242,6 +242,7 @@ docs/
 - **[balance-reprocessing.md](./balance-reprocessing.md)** - Sistema de reprocessamento de saldos
 - **[alerts-system.md](./alerts-system.md)** - Sistema de avisos (alerts) na Home
 - **[atomicity-improvements.md](./atomicity-improvements.md)** - Melhorias de atomicidade nas operações de contribuições
+- **[bugs-fixes.md](./bugs-fixes.md)** - Correções de bugs implementadas
 - **[especificacoes/pages.md](./especificacoes/pages.md)** - Especificações detalhadas de todas as páginas
 
 ### Documentos a Criar (Futuro)

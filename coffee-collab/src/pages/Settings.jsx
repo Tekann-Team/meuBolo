@@ -6,6 +6,7 @@ import { useUserProfile } from '../hooks/useUserProfile'
 import { updateUserProfile, migrateAllUserBalances } from '../services/userService'
 import { uploadUserPhoto } from '../services/storageService'
 import { ensureImageUrl } from '../services/googleDriveService'
+import { getCakeValue, setCakeValue } from '../services/configurationService'
 
 export function Settings() {
   const { user } = useAuth()
@@ -19,6 +20,9 @@ export function Settings() {
   const [photoPreview, setPhotoPreview] = useState(null)
   const [photoLink, setPhotoLink] = useState('')
   const [saving, setSaving] = useState(false)
+  const [cakeValue, setCakeValueState] = useState(25.0)
+  const [editingCakeValue, setEditingCakeValue] = useState(false)
+  const [savingCakeValue, setSavingCakeValue] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -27,6 +31,18 @@ export function Settings() {
     }
     setLoading(false)
   }, [profile])
+
+  useEffect(() => {
+    const loadCakeValue = async () => {
+      try {
+        const value = await getCakeValue()
+        setCakeValueState(value)
+      } catch (error) {
+        console.error('Error loading cake value:', error)
+      }
+    }
+    loadCakeValue()
+  }, [])
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0]
@@ -102,6 +118,25 @@ export function Settings() {
       alert('Erro ao migrar saldos: ' + error.message)
     } finally {
       setMigrating(false)
+    }
+  }
+
+  const handleSaveCakeValue = async () => {
+    if (cakeValue <= 0) {
+      alert('O valor do bolo deve ser maior que zero')
+      return
+    }
+
+    setSavingCakeValue(true)
+    try {
+      await setCakeValue(cakeValue)
+      setEditingCakeValue(false)
+      alert('Valor do bolo atualizado com sucesso!')
+    } catch (error) {
+      console.error('Error saving cake value:', error)
+      alert('Erro ao salvar valor do bolo. Tente novamente.')
+    } finally {
+      setSavingCakeValue(false)
     }
   }
 
@@ -318,6 +353,92 @@ export function Settings() {
               Configurações do Sistema
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ padding: '16px', background: 'rgba(139, 69, 19, 0.1)', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '18px', color: '#8B4513', marginBottom: '8px' }}>
+                  Valor do Bolo
+                </h3>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+                  Configure o valor padrão de um bolo em reais (R$). Este valor é usado para calcular automaticamente a quantidade de bolos quando uma contribuição é cadastrada.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <label style={{ fontSize: '14px', color: '#666', fontWeight: 'bold', minWidth: '120px' }}>
+                    Valor (R$):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={cakeValue}
+                    onChange={(e) => setCakeValueState(parseFloat(e.target.value) || 0)}
+                    disabled={!editingCakeValue}
+                    style={{
+                      flex: 1,
+                      maxWidth: '200px',
+                      padding: '12px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      background: editingCakeValue ? '#FFF' : '#F5F5F5'
+                    }}
+                  />
+                  {!editingCakeValue ? (
+                    <button
+                      onClick={() => setEditingCakeValue(true)}
+                      style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #A0522D 0%, #D2691E 100%)',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Editar
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => {
+                          setEditingCakeValue(false)
+                          // Reload cake value
+                          getCakeValue().then(value => setCakeValueState(value))
+                        }}
+                        disabled={savingCakeValue}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#FFF',
+                          color: '#8B4513',
+                          border: '2px solid #8B4513',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          cursor: savingCakeValue ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleSaveCakeValue}
+                        disabled={savingCakeValue}
+                        style={{
+                          padding: '8px 16px',
+                          background: savingCakeValue ? '#CCC' : 'linear-gradient(135deg, #A0522D 0%, #D2691E 100%)',
+                          color: '#FFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          cursor: savingCakeValue ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {savingCakeValue ? 'Salvando...' : 'Salvar'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div style={{ padding: '16px', background: 'rgba(139, 69, 19, 0.1)', borderRadius: '8px' }}>
                 <h3 style={{ fontSize: '18px', color: '#8B4513', marginBottom: '8px' }}>
                   Migração de Saldos

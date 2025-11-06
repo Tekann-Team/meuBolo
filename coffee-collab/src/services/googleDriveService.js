@@ -165,25 +165,64 @@ export function convertDriveLinkToImageUrl(shareLink) {
  * Converts Google Drive links to direct image URLs if needed
  * 
  * @param {string} imageUrl - Image URL (may be Google Drive link or direct URL)
+ * @param {boolean} forViewing - If true, returns URL optimized for viewing (with viewport parameter)
  * @returns {string} - Direct image URL ready for display
  */
-export function ensureImageUrl(imageUrl) {
+export function ensureImageUrl(imageUrl, forViewing = false) {
   if (!imageUrl) return imageUrl
   
   // If already a direct image URL (lh3.googleusercontent.com), return as is
   if (imageUrl.includes('lh3.googleusercontent.com')) {
-    // The URL format is: https://lh3.googleusercontent.com/d/FILE_ID
-    // Sometimes it might have query params, but the base format should work
-    // Remove any existing query params and keep only the base URL
-    const baseUrl = imageUrl.split('?')[0].split('=')[0]
-    // Return clean URL - Google Drive will serve the image directly
-    return baseUrl
+    // The URL format can be:
+    // - https://lh3.googleusercontent.com/d/FILE_ID
+    // - https://lh3.googleusercontent.com/d/FILE_ID=w1920-h1080
+    // - https://lh3.googleusercontent.com/d/FILE_ID?usp=...
+    
+    // Extract file ID - handle various formats
+    let fileId = null
+    
+    // Pattern 1: /d/FILE_ID (most common)
+    const fileIdMatch1 = imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+    if (fileIdMatch1 && fileIdMatch1[1]) {
+      fileId = fileIdMatch1[1]
+    } else {
+      // Pattern 2: /d/FILE_ID=w1920 (with viewport param)
+      const viewportMatch = imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)=/)
+      if (viewportMatch && viewportMatch[1]) {
+        fileId = viewportMatch[1]
+      }
+    }
+    
+    if (fileId) {
+      // For viewing in new tab, use the view URL format which is more reliable
+      if (forViewing) {
+        // Use the view URL format which is more reliable and less prone to rate limiting
+        // This format works even if the file needs authentication (opens Google Drive viewer)
+        return `https://drive.google.com/file/d/${fileId}/view`
+      }
+      // For img src, try multiple formats to avoid 429 errors
+      // First try with viewport parameter (most reliable)
+      // If that fails, the onError handler will show a link
+      return `https://lh3.googleusercontent.com/d/${fileId}=w1920-h1080`
+    }
+    
+    // Fallback: return original URL if we can't extract file ID
+    return imageUrl
   }
   
   // If it's a Google Drive share link, convert it
   if (isGoogleDriveUrl(imageUrl)) {
     try {
-      return convertDriveLinkToImageUrl(imageUrl)
+      const directUrl = convertDriveLinkToImageUrl(imageUrl)
+      // If for viewing, return the share link format which is more reliable
+      if (forViewing) {
+        // Extract file ID from the direct URL
+        const fileIdMatch = directUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+        if (fileIdMatch && fileIdMatch[1]) {
+          return `https://drive.google.com/file/d/${fileIdMatch[1]}/view`
+        }
+      }
+      return directUrl
     } catch (error) {
       console.error('Error converting Drive URL:', error)
       // Return original URL if conversion fails

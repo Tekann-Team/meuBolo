@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getOrCreateUserProfile, getUserProfile } from '../services/userService'
 
-const acronimoColors = ['#8B4513', '#A0522D', '#D2691E', '#DEB887', '#F5DEB3', '#DAA520', '#A0522D', '#8B4513']
-const acronimoLetters = ['C', 'A', 'F', 'E', 'G', 'R', 'A', 'O']
+const acronimoColors = ['#8B4513', '#A0522D', '#D2691E', '#DEB887']
+const acronimoLetters = ['B', 'O', 'L', 'O']
 
 // Function to highlight uppercase letters in text
 function highlightUppercaseLetters(text) {
@@ -76,7 +76,7 @@ export function Landing() {
     }
   }
 
-  const subtitle = 'Controle Automático de Fornecimento, Estoque e Gerenciamento de Registro de Abastecimento Operacional'
+  const subtitle = 'Base de Organização de Lanches Ocasionais'
 
   return (
     <div
@@ -92,8 +92,8 @@ export function Landing() {
     >
       
       <img 
-        src={`${import.meta.env.BASE_URL}logo_mini.png`}
-        alt="CAFÉ GRÃO" 
+        src={`${import.meta.env.BASE_URL}meuBolo_logo_mini.png`}
+        alt="meuBolo" 
         style={{ 
           height: '240px', 
           width: 'auto',
@@ -113,7 +113,7 @@ export function Landing() {
           letterSpacing: '2px'
         }}
       >
-        meu CAFÉ GRÃO
+        meuBolo
       </h1>
 
       <div style={{ marginBottom: '48px', maxWidth: '600px' }}>

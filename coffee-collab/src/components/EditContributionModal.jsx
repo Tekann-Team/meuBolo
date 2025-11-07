@@ -25,6 +25,7 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
   const [purchaseEvidenceFile, setPurchaseEvidenceFile] = useState(null)
   const [purchaseEvidencePreview, setPurchaseEvidencePreview] = useState(null)
   const [purchaseEvidenceURL, setPurchaseEvidenceURL] = useState(null)
+  const [purchaseEvidenceLink, setPurchaseEvidenceLink] = useState('')
   const [isDivided, setIsDivided] = useState(false)
   const [selectedParticipants, setSelectedParticipants] = useState([])
   const [isCompensated, setIsCompensated] = useState(false)
@@ -137,12 +138,24 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
       // Upload new evidence file if provided
       let newPurchaseEvidenceURL = purchaseEvidenceURL
       
-      if (purchaseEvidenceFile) {
+      // Use Google Drive link if provided, otherwise try file upload
+      const purchaseEvidenceInput = purchaseEvidenceLink || purchaseEvidenceFile
+      if (purchaseEvidenceInput) {
         try {
-          newPurchaseEvidenceURL = await uploadContributionEvidence(purchaseEvidenceFile, contributionId, 'purchase')
+          newPurchaseEvidenceURL = await uploadContributionEvidence(purchaseEvidenceInput, contributionId, 'purchase')
         } catch (uploadError) {
           console.error('Error uploading purchase evidence:', uploadError)
-          alert('Aviso: Upload da evidência de compra falhou. A contribuição será atualizada, mas a imagem antiga será mantida.')
+          const errorMessage = uploadError.message || 'Erro desconhecido ao fazer upload'
+          
+          // Show user-friendly error message
+          if (errorMessage.includes('Google Client ID não configurado')) {
+            alert('⚠️ Google Drive não está configurado. Por favor, configure as credenciais OAuth2 conforme o guia GOOGLE_DRIVE_SETUP.md')
+          } else if (errorMessage.includes('autenticação') || errorMessage.includes('auth')) {
+            alert('⚠️ Erro de autenticação com Google Drive. Por favor, tente novamente e autorize o acesso quando solicitado.')
+          } else {
+            alert(`⚠️ Erro ao processar evidência de compra: ${errorMessage}\n\nVocê pode fazer upload manual e colar o link do Google Drive.`)
+          }
+          // Continue even if upload fails - contribution will be updated without new evidence
         }
       }
 
@@ -479,12 +492,37 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Evidência Compra {purchaseEvidenceURL ? '(atual)' : '*'}
+                Evidência Compra {purchaseEvidenceURL ? '(atual)' : ''}
               </label>
+              <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666' }}>
+                Selecione um arquivo para upload automático (ou cole o link do Google Drive se preferir manual)
+              </div>
+              <input
+                type="text"
+                value={purchaseEvidenceLink}
+                onChange={(e) => {
+                  setPurchaseEvidenceLink(e.target.value)
+                  setPurchaseEvidenceFile(null)
+                  setPurchaseEvidencePreview(null)
+                }}
+                placeholder="Cole aqui o link do Google Drive (ou selecione arquivo abaixo)"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #DDD',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  marginBottom: '8px'
+                }}
+              />
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>OU</div>
               <input
                 type="file"
                 accept="image/*"
-                onChange={handlePurchaseEvidenceChange}
+                onChange={(e) => {
+                  handlePurchaseEvidenceChange(e)
+                  setPurchaseEvidenceLink('')
+                }}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -506,7 +544,12 @@ export function EditContributionModal({ isOpen, contributionId, onClose, onSucce
                   }}
                 />
               )}
-              {purchaseEvidenceURL && !purchaseEvidencePreview && (
+              {purchaseEvidenceLink && !purchaseEvidencePreview && (
+                <div style={{ marginTop: '12px', fontSize: '12px', color: '#666' }}>
+                  Link do Google Drive: {purchaseEvidenceLink.substring(0, 50)}...
+                </div>
+              )}
+              {purchaseEvidenceURL && !purchaseEvidencePreview && !purchaseEvidenceLink && (
                 <div style={{ marginTop: '12px' }}>
                   <p style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Imagem atual:</p>
                   <img

@@ -72,12 +72,15 @@ Armazena todas as contribuições (compras de café) registradas.
   userId: string,                   // FK: ID do usuário que contribuiu (reference to users)
   purchaseDate: Timestamp,          // Data da compra
   value: number,                    // Valor gasto (R$)
-  quantityKg: number,              // Quantidade comprada (em bolos) - campo mantido para compatibilidade
+  quantityCakes: number,             // Quantidade de bolos (calculado ou manual)
+  quantityKg: number,                // Quantidade comprada (em bolos) - campo mantido para compatibilidade
+  cakeValue: number | null,         // Valor do bolo usado no cálculo (null para bolos caseiros)
   productId: string,               // FK: ID do produto/café (reference to products)
   purchaseEvidence: string | null, // URL da imagem/comprovante da compra
   arrivalEvidence: string | null,  // URL da imagem/evidência da chegada
   arrivalDate: Timestamp | null,   // Data de chegada do café
   isDivided: boolean,               // Indica se a compra foi rachada entre colaboradores (default: false)
+  isHomemadeCake: boolean,          // Indica se é um bolo caseiro (default: false)
   createdAt: Timestamp,            // Data de criação do registro
   updatedAt: Timestamp             // Data de última atualização
 }
@@ -101,11 +104,21 @@ Quando `isDivided: true`, cada documento na subcollection representa um particip
 - Ao criar contribuição, `purchaseEvidence` é opcional
 - `arrivalEvidence` e `arrivalDate` são opcionais inicialmente
 - Se `arrivalEvidence` for adicionada e o produto ainda não tiver foto, essa evidência vira a foto do produto
-- Ao atualizar uma contribuição de um produto existente, recalcular `averagePricePerKg` do produto (campo mantido para compatibilidade, mas representa preço por bolo)
+- Ao atualizar uma contribuição de um produto existente, recalcular `averagePricePerKg` do produto (campo mantido para compatibilidade, mas representa preço por bolo). **Nota**: Contribuições com `value = 0` (bolos caseiros) são ignoradas no cálculo do preço médio
 - **Contribuições já compensadas**: Se `purchaseDate <= data da última compensação`, a contribuição é considerada já compensada. Edições em contribuições já compensadas não afetam o saldo dos usuários (apenas atualizam dados não relacionados ao saldo)
+- **Bolos caseiros (`isHomemadeCake: true`)**:
+  - `value` deve ser `0` (R$ 0,00)
+  - `quantityCakes` é inserido **manualmente** pelo usuário (não calculado)
+  - `cakeValue` é `null` (não usado para cálculo)
+  - 1 bolo caseiro = 1 bolo (equivalente a um bolo comprado)
+  - Contam normalmente para todos os indicadores e saldos
+- **Bolos comprados (`isHomemadeCake: false` ou não definido)**:
+  - `value` é obrigatório e deve ser > 0
+  - `quantityCakes` é calculado automaticamente como `value / cakeValue`
+  - `cakeValue` é salvo no momento da contribuição
 - Se `isDivided: true`:
   - A quantidade e valor são divididos igualmente entre todos os participantes (incluindo o comprador)
-  - Cada participante recebe `quantityKg / totalParticipantes` e `value / totalParticipantes` (quantityKg representa quantidade de bolos)
+  - Cada participante recebe `quantityCakes / totalParticipantes` e `value / totalParticipantes`
   - O saldo de cada participante é atualizado com a quantidade atribuída a ele
   - Os participantes são armazenados na subcollection `contributionDetails`
 - Se `isDivided: false` (ou não definido, padrão):

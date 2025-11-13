@@ -26,13 +26,30 @@ import { getCakeValue } from './configurationService'
 export async function createContribution(contributionData) {
   const isDivided = contributionData.isDivided || false
   const participantUserIds = contributionData.participantUserIds || []
+  const isHomemadeCake = contributionData.isHomemadeCake || false
   
   try {
-    // Get cake value to calculate quantity
+    // Get cake value to calculate quantity (only if not homemade)
     const cakeValue = await getCakeValue()
     
-    // Calculate quantity of cakes based on value
-    const quantityCakes = contributionData.value / cakeValue
+    // Calculate quantity of cakes
+    let quantityCakes
+    let value
+    if (isHomemadeCake) {
+      // Homemade cake: value is 0, quantity is manual
+      value = 0
+      quantityCakes = contributionData.quantityCakes || 0
+      if (quantityCakes <= 0) {
+        throw new Error('Quantidade de bolos deve ser maior que zero para bolos caseiros')
+      }
+    } else {
+      // Regular cake: calculate quantity from value
+      value = contributionData.value
+      if (value <= 0) {
+        throw new Error('Valor deve ser maior que zero para bolos comprados')
+      }
+      quantityCakes = value / cakeValue
+    }
     
     // Prepare data before batch operations
     const contributionsRef = collection(db, 'contributions')
@@ -41,11 +58,12 @@ export async function createContribution(contributionData) {
     const newContribution = {
       userId: contributionData.userId,
       purchaseDate: Timestamp.fromDate(new Date(contributionData.purchaseDate)),
-      value: contributionData.value,
+      value: value,
       quantityCakes: quantityCakes,
-      cakeValue: cakeValue, // Save cake value at time of contribution
+      cakeValue: isHomemadeCake ? null : cakeValue, // Only save cake value for regular cakes
       purchaseEvidence: contributionData.purchaseEvidence || null,
       isDivided: isDivided,
+      isHomemadeCake: isHomemadeCake,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }
@@ -72,7 +90,7 @@ export async function createContribution(contributionData) {
       const allParticipants = [...new Set([contributionData.userId, ...participantUserIds])]
       const totalParticipants = allParticipants.length
       const quantityPerPerson = quantityCakes / totalParticipants
-      const valuePerPerson = contributionData.value / totalParticipants
+      const valuePerPerson = value / totalParticipants
       
       // Create contribution details subcollection
       const detailsRef = collection(db, 'contributions', contributionId, 'contributionDetails')
@@ -249,21 +267,59 @@ export async function updateContribution(contributionId, updates) {
   try {
     const contributionRef = doc(db, 'contributions', contributionId)
     
-    // Get cake value for calculation
+    // Get cake value for calculation (only if not homemade)
     const cakeValue = await getCakeValue()
     
-    // Calculate quantityCakes if value is being updated
+    // Determine if this is a homemade cake
+    const isHomemadeCake = updates.isHomemadeCake !== undefined 
+      ? updates.isHomemadeCake 
+      : (contribution.isHomemadeCake || false)
+    
+    // Calculate quantityCakes and value based on isHomemadeCake
     let quantityCakes = contribution.quantityCakes || 0
+    let value = contribution.value || 0
     const updateData = {
       ...updates,
       updatedAt: serverTimestamp()
     }
     
-    if (updates.value !== undefined) {
-      quantityCakes = updates.value / cakeValue
-      updateData.quantityCakes = quantityCakes
-      updateData.cakeValue = cakeValue // Save cake value at time of update
+    if (isHomemadeCake) {
+      // Homemade cake: value is 0, quantity is manual
+      value = 0
+      updateData.value = 0
+      
+      if (updates.quantityCakes !== undefined) {
+        quantityCakes = updates.quantityCakes
+        if (quantityCakes <= 0) {
+          throw new Error('Quantidade de bolos deve ser maior que zero para bolos caseiros')
+        }
+        updateData.quantityCakes = quantityCakes
+      } else if (updates.isHomemadeCake && !contribution.isHomemadeCake) {
+        // Converting from regular to homemade - keep current quantity
+        quantityCakes = contribution.quantityCakes || 0
+        updateData.quantityCakes = quantityCakes
+      }
+      
+      updateData.cakeValue = null // Don't save cake value for homemade cakes
+    } else {
+      // Regular cake: calculate quantity from value
+      if (updates.value !== undefined) {
+        value = updates.value
+        if (value <= 0) {
+          throw new Error('Valor deve ser maior que zero para bolos comprados')
+        }
+        quantityCakes = value / cakeValue
+        updateData.quantityCakes = quantityCakes
+        updateData.cakeValue = cakeValue // Save cake value at time of update
+      } else if (updates.isHomemadeCake === false && contribution.isHomemadeCake) {
+        // Converting from homemade to regular - need value
+        if (updates.value === undefined) {
+          throw new Error('Valor é obrigatório ao converter bolo caseiro em bolo comprado')
+        }
+      }
     }
+    
+    updateData.isHomemadeCake = isHomemadeCake
     
     // Convert dates to Timestamps if present
     if (updates.purchaseDate) {
@@ -304,10 +360,10 @@ export async function updateContribution(contributionId, updates) {
       // Create new details
       const allParticipants = [...new Set([contribution.userId, ...participantUserIds])]
       const totalParticipants = allParticipants.length
-      const currentQuantityCakes = updates.value !== undefined ? quantityCakes : (contribution.quantityCakes || 0)
-      const value = updates.value !== undefined ? updates.value : contribution.value
+      const currentQuantityCakes = quantityCakes
+      const currentValue = value
       const quantityPerPerson = currentQuantityCakes / totalParticipants
-      const valuePerPerson = value / totalParticipants
+      const valuePerPerson = currentValue / totalParticipants
       
       const newDetailsRef = collection(db, 'contributions', contributionId, 'contributionDetails')
       

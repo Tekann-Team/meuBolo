@@ -92,6 +92,7 @@ export async function deleteProduct(productId) {
 
 /**
  * Recalculate and update average price per kg for a product
+ * Ignores contributions with value = 0 (homemade cakes) to avoid distorting the average
  */
 export async function updateProductAveragePrice(productId) {
   const contributions = await getAllContributions()
@@ -102,8 +103,18 @@ export async function updateProductAveragePrice(productId) {
     return
   }
   
-  const totalValue = productContributions.reduce((sum, c) => sum + (c.value || 0), 0)
-  const totalKg = productContributions.reduce((sum, c) => sum + (c.quantityCakes || c.quantityKg || 0), 0)
+  // Filter out contributions with value = 0 (homemade cakes)
+  // These should not be included in the average price calculation
+  const contributionsWithValue = productContributions.filter(c => (c.value || 0) > 0)
+  
+  if (contributionsWithValue.length === 0) {
+    // All contributions are homemade (value = 0), set average to 0
+    await updateProduct(productId, { averagePricePerKg: 0 })
+    return
+  }
+  
+  const totalValue = contributionsWithValue.reduce((sum, c) => sum + (c.value || 0), 0)
+  const totalKg = contributionsWithValue.reduce((sum, c) => sum + (c.quantityCakes || c.quantityKg || 0), 0)
   
   const averagePricePerKg = totalKg > 0 ? totalValue / totalKg : 0
   

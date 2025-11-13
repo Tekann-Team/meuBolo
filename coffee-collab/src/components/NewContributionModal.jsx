@@ -25,6 +25,8 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
   const [purchaseEvidenceLink, setPurchaseEvidenceLink] = useState('')
   const [isDivided, setIsDivided] = useState(false)
   const [selectedParticipants, setSelectedParticipants] = useState([])
+  const [isHomemadeCake, setIsHomemadeCake] = useState(false)
+  const [manualQuantityCakes, setManualQuantityCakes] = useState('')
 
   useEffect(() => {
     if (!isOpen) {
@@ -36,6 +38,8 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
       setPurchaseEvidenceLink('')
       setIsDivided(false)
       setSelectedParticipants([])
+      setIsHomemadeCake(false)
+      setManualQuantityCakes('')
       return
     }
     
@@ -60,15 +64,23 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
     loadData()
   }, [isOpen, user?.uid])
   
-  // Calculate quantity of cakes when value changes
+  // Calculate quantity of cakes when value changes (only if not homemade)
   useEffect(() => {
-    if (value && cakeValue > 0) {
+    if (!isHomemadeCake && value && cakeValue > 0) {
       const calculatedCakes = parseFloat(value) / cakeValue
       setQuantityCakes(calculatedCakes)
-    } else {
+    } else if (!isHomemadeCake) {
       setQuantityCakes(0)
     }
-  }, [value, cakeValue])
+  }, [value, cakeValue, isHomemadeCake])
+  
+  // Update quantityCakes when manual quantity changes (only if homemade)
+  useEffect(() => {
+    if (isHomemadeCake && manualQuantityCakes) {
+      const parsedQuantity = parseFloat(manualQuantityCakes)
+      setQuantityCakes(parsedQuantity || 0)
+    }
+  }, [manualQuantityCakes, isHomemadeCake])
 
 
   const handlePurchaseEvidenceChange = (e) => {
@@ -87,14 +99,24 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!purchaseDate || !value) {
-      alert('Preencha todos os campos obrigatórios')
-      return
-    }
+    // Validate based on isHomemadeCake
+    if (isHomemadeCake) {
+      // Homemade cake: quantity is required, value is 0
+      if (!manualQuantityCakes || parseFloat(manualQuantityCakes) <= 0) {
+        alert('Quantidade de bolos deve ser maior que zero para bolos caseiros')
+        return
+      }
+    } else {
+      // Regular cake: value is required
+      if (!purchaseDate || !value) {
+        alert('Preencha todos os campos obrigatórios')
+        return
+      }
 
-    if (parseFloat(value) <= 0) {
-      alert('Valor deve ser maior que zero')
-      return
+      if (parseFloat(value) <= 0) {
+        alert('Valor deve ser maior que zero')
+        return
+      }
     }
 
     const purchaseDateObj = new Date(purchaseDate)
@@ -109,10 +131,12 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
       const contributionData = {
         userId: selectedUserId || user.uid,
         purchaseDate: purchaseDate,
-        value: parseFloat(value),
+        value: isHomemadeCake ? 0 : parseFloat(value),
         purchaseEvidence: null, // Will be updated after upload
         isDivided: isDivided,
-        participantUserIds: isDivided ? selectedParticipants : []
+        participantUserIds: isDivided ? selectedParticipants : [],
+        isHomemadeCake: isHomemadeCake,
+        quantityCakes: isHomemadeCake ? parseFloat(manualQuantityCakes) : undefined // Only send if homemade
       }
 
       const result = await createContribution(contributionData)
@@ -159,6 +183,8 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
       setPurchaseEvidenceLink('')
       setIsDivided(false)
       setSelectedParticipants([])
+      setIsHomemadeCake(false)
+      setManualQuantityCakes('')
 
       // Show success message
       if (compensationCreated) {
@@ -274,8 +300,31 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
             )}
 
             <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={isHomemadeCake}
+                  onChange={(e) => {
+                    setIsHomemadeCake(e.target.checked)
+                    if (e.target.checked) {
+                      setValue('0')
+                      setManualQuantityCakes('')
+                    } else {
+                      setValue('')
+                      setManualQuantityCakes('')
+                    }
+                  }}
+                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                />
+                <span style={{ color: '#666', fontWeight: 'bold', fontSize: '16px' }}>
+                  Eu fiz meuBolo!
+                </span>
+              </label>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Data Compra *
+                {isHomemadeCake ? 'Data do bolo *' : 'Data Compra *'}
               </label>
               <input
                 type="date"
@@ -292,41 +341,80 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Valor (R$) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                required
-                min="0.01"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #DDD',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
-            </div>
-
-            {value && quantityCakes > 0 && (
-              <div style={{ marginBottom: '16px', padding: '12px', background: '#FFF8E7', borderRadius: '8px', border: '2px solid #D2691E' }}>
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  <strong>Quantidade de bolos calculada:</strong> {quantityCakes.toFixed(2)} bolos
+            {!isHomemadeCake && (
+              <>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
+                    Valor (R$) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    required
+                    min="0.01"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #DDD',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
                 </div>
+
+                {value && quantityCakes > 0 && (
+                  <div style={{ marginBottom: '16px', padding: '12px', background: '#FFF8E7', borderRadius: '8px', border: '2px solid #D2691E' }}>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      <strong>Quantidade de bolos calculada:</strong> {quantityCakes.toFixed(2)} bolos
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                      (Valor do bolo: R$ {cakeValue.toFixed(2)})
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {isHomemadeCake && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
+                  Quantidade de bolos *
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={manualQuantityCakes}
+                  onChange={(e) => setManualQuantityCakes(e.target.value)}
+                  required
+                  min="0.1"
+                  placeholder="Ex: 1, 2.5, 3"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #DDD',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
                 <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                  (Valor do bolo: R$ {cakeValue.toFixed(2)})
+                  Insira a quantidade de bolos caseiros que você fez
+                </div>
+                <div style={{ marginTop: '12px', padding: '12px', background: '#FFF8E7', borderRadius: '8px', border: '2px solid #D2691E' }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    <strong>Valor:</strong> R$ 0,00 (bolo caseiro)
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+                    <strong>Quantidade:</strong> {manualQuantityCakes || '0'} bolos
+                  </div>
                 </div>
               </div>
             )}
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Rachar compra (Vaquinha)
+                {isHomemadeCake ? 'Rachar bolo (Vaquinha)' : 'Rachar compra (Vaquinha)'}
               </label>
               <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -450,7 +538,7 @@ export function NewContributionModal({ isOpen, onClose, onSuccess }) {
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#666', fontWeight: 'bold' }}>
-                Evidência Compra
+                {isHomemadeCake ? 'Evidência do bolo' : 'Evidência Compra'}
               </label>
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666' }}>
                 Selecione um arquivo para upload automático (ou cole o link do Google Drive se preferir manual)

@@ -442,6 +442,19 @@ export function Contributions() {
                             }}>
                               Vaquinha
                             </div>
+                            {contribution.isHomemadeCake && (
+                              <img
+                                src={`${import.meta.env.BASE_URL}meuBolo_logo_mini.png`}
+                                alt="Bolo caseiro"
+                                title="meuBolo caseiro!"
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  objectFit: 'contain',
+                                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))'
+                                }}
+                              />
+                            )}
                             <div style={{ fontSize: '14px', color: '#666' }}>
                               {purchaseDate.toLocaleDateString('pt-BR')}
                             </div>
@@ -556,9 +569,11 @@ export function Contributions() {
                         <div style={{ color: '#666', fontSize: '14px' }}>
                           Quantidade: <strong>{(contribution.quantityCakes || contribution.quantityKg || 0).toFixed(2)} 🍰</strong>
                         </div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2d5016' }}>
-                          R$ {contribution.value?.toFixed(2) || '0.00'}
-                        </div>
+                        {!contribution.isHomemadeCake && (
+                          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2d5016' }}>
+                            R$ {contribution.value?.toFixed(2) || '0.00'}
+                          </div>
+                        )}
                       </div>
                       
                       {/* Evidence section */}
@@ -628,8 +643,22 @@ export function Contributions() {
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      {(contribution.purchaseEvidence || contribution.arrivalEvidence) && (
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      {contribution.isHomemadeCake && (
+                        <img
+                          src={`${import.meta.env.BASE_URL}meuBolo_logo_mini.png`}
+                          alt="Bolo caseiro"
+                          title="meuBolo caseiro!"
+                          style={{
+                            width: '96px',
+                            height: '96px',
+                            objectFit: 'contain',
+                            filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))'
+                          }}
+                        />
+                      )}
+                      <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        {(contribution.purchaseEvidence || contribution.arrivalEvidence) && (
                         <button
                           onClick={() => setShowingEvidence(showingEvidence === contribution.id ? null : contribution.id)}
                           style={{
@@ -682,6 +711,7 @@ export function Contributions() {
                           )}
                         </div>
                       )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -346,17 +346,30 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
    - Formato DD/MM/AAAA
    - Obrigatório
 
-3. **Valor (R$)** *
+3. **☑ Eu fiz meuBolo!** (Checkbox)
+   - Quando marcado:
+     - Campo "Valor (R$)" fica desabilitado e com valor `0.00`
+     - Campo "Quantidade de bolos" fica habilitado para entrada manual
+     - Usuário pode inserir qualquer quantidade (decimal permitido)
+   - Quando desmarcado:
+     - Comportamento normal: valor é obrigatório, quantidade é calculada automaticamente
+
+4. **Valor (R$)** * (apenas se "Eu fiz meuBolo!" não estiver marcado)
    - Input numérico
    - Formato monetário brasileiro
-   - Obrigatório
+   - Obrigatório se não for bolo caseiro
+   - Desabilitado se "Eu fiz meuBolo!" estiver marcado
 
-4. **Quantidade (bolos)** *
-   - Input numérico
-   - Permitir decimais
-   - Obrigatório
+5. **Quantidade de bolos** *
+   - Se "Eu fiz meuBolo!" estiver marcado:
+     - Input numérico habilitado para entrada manual
+     - Permitir decimais (ex: 1, 2.5, 3)
+     - Obrigatório
+   - Se "Eu fiz meuBolo!" não estiver marcado:
+     - Calculado automaticamente como `valor / cakeValue`
+     - Exibido em card informativo (não editável)
 
-5. **Rachar compra (Vaquinha)**
+6. **Rachar compra (Vaquinha)**
    - Radio buttons: "Não" (padrão) / "Sim"
    - **Disponível para todos os usuários** (não apenas admins)
    - Se "Sim":
@@ -365,7 +378,7 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
      - Mostra resumo: total de pessoas, valor por pessoa, quantidade por pessoa
      - O comprador sempre está incluído automaticamente
 
-6. **Café/Produto** *
+7. **Café/Produto** *
    - **Componente especial**: Busca com filtro em tempo real
    - Ao digitar, filtra produtos existentes
    - **Melhorias implementadas**:
@@ -378,19 +391,19 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
    - Se digitar nome novo (sem selecionar): cria produto automaticamente ao salvar
    - **Prevenção de duplicatas**: Ao selecionar um produto, a lista é ocultada para evitar confusão
 
-7. **Evidência Compra**
+8. **Evidência Compra**
    - Campo de texto para colar link do Google Drive OU
    - Upload de arquivo (upload automático ainda não configurado)
    - Preview da imagem selecionada ou confirmação do link
    - Opcional
 
-8. **Evidência Chegada**
+9. **Evidência Chegada**
    - Campo de texto para colar link do Google Drive OU
    - Upload de arquivo (upload automático ainda não configurado)
    - Preview da imagem selecionada ou confirmação do link
    - Opcional
 
-9. **Data Chegada**
+10. **Data Chegada**
    - Datepicker
    - Opcional
 
@@ -408,7 +421,16 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
     - `averageRating`: 0
   - Se produto existente: Atualiza `averagePricePerKg` do produto (após criação bem-sucedida):
     - Recalcula: soma todos os valores / soma todos os bolos
-  - Cria documento em `contributions` com `isDivided` (false por padrão) **atomicamente**
+    - **Nota**: Contribuições com `value = 0` (bolos caseiros) são ignoradas no cálculo do preço médio
+  - Cria documento em `contributions` com `isDivided` (false por padrão) e `isHomemadeCake` (false por padrão) **atomicamente**
+  - Se `isHomemadeCake: true`:
+    - `value` é definido como `0`
+    - `quantityCakes` vem do input manual do usuário
+    - `cakeValue` é `null`
+  - Se `isHomemadeCake: false`:
+    - `value` vem do input do usuário
+    - `quantityCakes` é calculado como `value / cakeValue`
+    - `cakeValue` é salvo no momento da contribuição
   - Se `isDivided: true`:
     - Cria documentos na subcollection `contributionDetails` para cada participante **no mesmo batch**
     - Divide `quantityKg` (bolos) e `value` igualmente entre todos os participantes (incluindo comprador)
@@ -419,11 +441,15 @@ Este documento detalha cada página/tela do sistema, seus componentes, comportam
   - **Validações de segurança**: Usuários devem estar ativos (`isActive: true`) para criar contribuições
 
 - **Validações**:
-  - Campos obrigatórios (*): Data Compra, Valor
+  - Campos obrigatórios (*): Data Compra
+  - Se "Eu fiz meuBolo!" estiver marcado:
+    - Valor é automaticamente `0` (R$ 0,00)
+    - Quantidade de bolos é obrigatória e deve ser > 0
+  - Se "Eu fiz meuBolo!" não estiver marcado:
+    - Valor é obrigatório e deve ser > 0
+    - Quantidade é calculada automaticamente a partir do valor e do valor do bolo configurado
   - Data compra não pode ser futura
   - Data chegada não pode ser anterior à data compra
-  - Valor deve ser > 0
-  - Quantidade é calculada automaticamente a partir do valor e do valor do bolo configurado
 
 ---
 

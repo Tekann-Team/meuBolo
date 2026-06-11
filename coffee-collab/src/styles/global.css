@@ -66,6 +66,73 @@ body {
   color: var(--black);
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.chart-scroll-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+@media (max-width: 600px) {
+  .chart-scroll-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chart-scroll-content {
+    min-width: 560px;
+  }
+
+  .app-main {
+    margin-left: 0 !important;
+    padding: 12px !important;
+    padding-bottom: 150px !important;
+  }
+
+  .app-footer {
+    left: 0 !important;
+    bottom: 64px !important;
+    padding: 10px 12px !important;
+    justify-content: center !important;
+    text-align: center;
+    gap: 4px !important;
+  }
+
+  .app-sidebar {
+    top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    padding: 4px 8px !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .app-sidebar > div {
+    display: none !important;
+  }
+
+  .app-sidebar nav {
+    display: flex;
+    flex: 1;
+    justify-content: space-around;
+  }
+
+  .app-sidebar nav a {
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    flex-shrink: 0;
+  }
+}
+
 /* Global utility classes */
 .container {
   max-width: 1200px;

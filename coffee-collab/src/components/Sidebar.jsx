@@ -20,6 +20,7 @@ export function Sidebar() {
 
   return (
     <div
+      className="app-sidebar"
       style={{
         position: 'fixed',
         left: 0,

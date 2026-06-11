@@ -76,7 +76,7 @@ export function TimelineChart({ contributions }) {
       yAxis: {
         type: 'value',
         axisLabel: {
-          formatter: '{value} 🍰'
+          formatter: (value) => `${Number(value).toFixed(2)} 🍰`
         }
       },
       series: [
@@ -92,7 +92,7 @@ export function TimelineChart({ contributions }) {
           label: {
             show: true,
             position: 'top',
-            formatter: '{c} 🍰'
+            formatter: (params) => `${Number(params.value).toFixed(2)} 🍰`
           }
         }
       ]
@@ -104,9 +104,12 @@ export function TimelineChart({ contributions }) {
     const handleResize = () => {
       chart.resize()
     }
+    const resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver.observe(chartRef.current)
     window.addEventListener('resize', handleResize)
 
     return () => {
+      resizeObserver.disconnect()
       window.removeEventListener('resize', handleResize)
       chart.dispose()
       chartInstanceRef.current = null
@@ -122,14 +125,17 @@ export function TimelineChart({ contributions }) {
   }
 
   return (
-    <div
-      ref={chartRef}
-      style={{
-        width: '100%',
-        height: '300px',
-        minHeight: '200px'
-      }}
-    />
+    <div className="chart-scroll-container">
+      <div
+        className="chart-scroll-content"
+        ref={chartRef}
+        style={{
+          width: '100%',
+          height: '300px',
+          minHeight: '200px'
+        }}
+      />
+    </div>
   )
 }
 

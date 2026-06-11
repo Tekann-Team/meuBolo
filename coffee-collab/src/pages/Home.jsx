@@ -11,6 +11,7 @@ import { NewContributionModal } from '../components/NewContributionModal'
 import { EditContributionModal } from '../components/EditContributionModal'
 import { CollaboratorsChart } from '../components/CollaboratorsChart'
 import { TimelineChart } from '../components/TimelineChart'
+import './Home.css'
 
 export function Home() {
   const { user, signOut } = useAuth()
@@ -201,9 +202,10 @@ export function Home() {
 
   return (
     <Layout>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="home-page" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div
+          className="home-header"
           style={{
             background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '16px',
@@ -231,8 +233,9 @@ export function Home() {
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div className="home-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div
+              className="home-profile-card"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -274,8 +277,9 @@ export function Home() {
               </div>
             </div>
 
-            <div style={{ position: 'relative' }}>
+            <div className="home-action-wrapper" style={{ position: 'relative' }}>
               <button
+                className="home-action-button"
                 onClick={() => setShowAddMenu(!showAddMenu)}
                 style={{
                   padding: '12px 20px',
@@ -332,6 +336,7 @@ export function Home() {
             </div>
 
             <button
+              className="home-action-button"
               onClick={handleLogout}
               style={{
                 padding: '12px 20px',
@@ -350,8 +355,8 @@ export function Home() {
         </div>
 
         <div
+          className="home-audit-banner"
           style={{
-            marginBottom: '24px',
             background: 'linear-gradient(135deg, rgba(255, 250, 240, 0.98) 0%, rgba(255, 248, 220, 0.98) 100%)',
             borderRadius: '14px',
             padding: '16px 22px',
@@ -416,10 +421,12 @@ export function Home() {
         </div>
 
         {/* Dashboard Cards - First Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
-          {/* Colaboradores - 2 columns */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+          {/* Colaboradores */}
           <div
+            className="home-card"
             style={{
+              order: 2,
               background: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '16px',
               padding: '24px',
@@ -432,57 +439,55 @@ export function Home() {
             <CollaboratorsChart users={allUsers} />
           </div>
 
-          {/* Indicadores - 1 column */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '24px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-            }}
-          >
-            <h2 style={{ fontSize: '20px', color: '#8B4513', marginBottom: '16px' }}>
-              Indicadores
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Valor Total Investido</div>
+          {/* Indicadores */}
+    
+            <div
+              className="home-indicators-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '12px',
+                
+              }}
+            >
+              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '16px',background: 'rgba(255, 255, 255)', }}>
+                <div style={{ fontSize: '12px', color: '#503426', marginBottom: '4px', fontWeight: 'bold' }}>Valor Total Investido</div>
                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#8B4513' }}>
                   R$ {indicators.totalValue.toFixed(2)}
                 </div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Total de Bolos</div>
+              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '16px',background: 'rgba(255, 255, 255)', }}>
+                <div style={{ fontSize: '12px', color: '#503426', marginBottom: '4px' , fontWeight: 'bold'}}>Total de Bolos</div>
                 <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#8B4513' }}>
                   {indicators.totalCakes.toFixed(2)} bolos
                 </div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Média Consumo Mensal</div>
+              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '16px' ,background: 'rgba(255, 255, 255)',}}>
+                <div style={{ fontSize: '12px', color: '#503426', marginBottom: '4px', fontWeight: 'bold' }}>Média Consumo Mensal</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8B4513' }}>
                   {indicators.avgMonthlyCakes.toFixed(2)} 🍰
                 </div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Média Investimento Mensal</div>
+              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '16px' ,background: 'rgba(255, 255, 255)',}}>
+                <div style={{ fontSize: '12px', color: '#503426', marginBottom: '4px', fontWeight: 'bold' }}>Média Investimento Mensal</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8B4513' }}>
                   R$ {indicators.avgMonthlyValue.toFixed(2)}
                 </div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Gasto Médio por Colaborador Ativo</div>
+              <div style={{ padding: '12px', background: 'rgba(139, 69, 19, 0.05)', borderRadius: '16px',background: 'rgba(255, 255, 255)', }}>
+                <div style={{ fontSize: '12px', color: '#503426', marginBottom: '4px' , fontWeight: 'bold'}}>Gasto Médio por Colaborador Ativo</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8B4513' }}>
                   R$ {newIndicators.avgSpendingPerActive.toFixed(2)}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
         {/* Dashboard Cards - Second Row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' }}>
           {/* Quem ainda não contribuiu nesta rodada */}
           <div
+            className="home-card"
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '16px',
@@ -494,9 +499,10 @@ export function Home() {
               👤 Quem ainda não contribuiu nesta rodada
             </h2>
             {newIndicators.usersWithoutContribution && newIndicators.usersWithoutContribution.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>
+              <div className="home-users-grid" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>
                 {newIndicators.usersWithoutContribution.map((user, index) => (
                   <div
+                    className="home-user-card"
                     key={user.userId || index}
                     style={{
                       display: 'flex',
@@ -544,6 +550,7 @@ export function Home() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
           {/* Linha do Tempo - 3 columns (full width) */}
           <div
+            className="home-card"
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '16px',

@@ -7,6 +7,7 @@ export function Layout({ children }) {
       <div style={{ display: 'flex', flex: 1 }}>
         <Sidebar />
         <main
+          className="app-main"
           style={{
             marginLeft: '64px',
             flex: 1,
@@ -20,6 +21,7 @@ export function Layout({ children }) {
         </main>
       </div>
       <footer
+        className="app-footer"
         style={{
           position: 'fixed',
           bottom: 0,

@@ -1,10 +1,34 @@
 // Collaborators balance chart component - Bar Race with images
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as echarts from 'echarts'
+
+const normalizeName = (name = '') => {
+  return name
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase('pt-BR')
+    .replace(/(^|[\s'-])\p{L}/gu, letter => letter.toLocaleUpperCase('pt-BR'))
+}
+
+const formatMobileName = (name) => {
+  const normalizedName = normalizeName(name)
+  const [firstName, secondName] = normalizedName.split(' ')
+
+  return secondName ? `${firstName} ${secondName.charAt(0)}.` : firstName
+}
 
 export function CollaboratorsChart({ users }) {
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 600)
+  const chartHeight = Math.max(400, (users?.length || 0) * 40 + 80)
+
+  useEffect(() => {
+    const handleViewportResize = () => setIsMobile(window.innerWidth <= 600)
+
+    window.addEventListener('resize', handleViewportResize)
+    return () => window.removeEventListener('resize', handleViewportResize)
+  }, [])
 
   useEffect(() => {
     if (!chartRef.current || !users) return
@@ -19,7 +43,7 @@ export function CollaboratorsChart({ users }) {
     // Include all users with their balance
     const allUsersData = users.map(user => ({
       id: user.id,
-      name: user.name,
+      name: isMobile ? formatMobileName(user.name) : normalizeName(user.name),
       photoURL: user.photoURL,
       balance: user.balance || 0
     }))
@@ -32,21 +56,21 @@ export function CollaboratorsChart({ users }) {
 
     // Different colors for each bar
     const barColors = [
-      '#8B4513', // SaddleBrown
-      '#A0522D', // Sienna
-      '#D2691E', // Chocolate
-      '#CD853F', // Peru
-      '#DEB887', // BurlyWood
-      '#F4A460', // SandyBrown
-      '#D2B48C', // Tan
-      '#BC8F8F', // RosyBrown
-      '#A08070', // Custom brown
-      '#8B7355', // Custom brown
-      '#6B4423', // Dark brown
-      '#9C661F', // Custom brown
-      '#C19A6B', // Custom beige-brown
-      '#8B6914', // Dark goldenrod
-      '#B8860B'  // DarkGoldenrod
+      '#8B4513',
+      '#A0522D',
+      '#D2691E',
+      '#CD853F',
+      '#DEB887',
+      '#F4A460',
+      '#D2B48C',
+      '#BC8F8F',
+      '#A08070',
+      '#8B7355',
+      '#6B4423',
+      '#9C661F',
+      '#C19A6B',
+      '#8B6914',
+      '#B8860B'
     ]
 
     // Chart configuration for bar race
@@ -91,18 +115,19 @@ export function CollaboratorsChart({ users }) {
         }
       },
       grid: {
-        left: '20%',
-        right: '10%',
-        top: '10%',
-        bottom: '10%'
+        left: 12,
+        right: 100,
+        top: 30,
+        bottom: 50,
+        containLabel: true
       },
       xAxis: {
         type: 'value',
         name: 'Saldo 🍰',
         axisLabel: {
-          formatter: '{value} 🍰'
+          formatter: (value) => `${Number(value).toFixed(2)} 🍰`
         },
-        max: (value) => Math.max(value.max * 1.1, 1) // Add some padding
+        max: (value) => Math.max(value.max * 1.35, 1)
       },
       yAxis: {
         type: 'category',
@@ -110,7 +135,7 @@ export function CollaboratorsChart({ users }) {
         inverse: true, // Top to bottom
         axisLabel: {
           fontSize: 12,
-          margin: 50,
+          margin: 12,
           rich: photoURLs.reduce((acc, photoURL, idx) => {
             // Use data URI or image URL format
             const imageUrl = photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIHZpZXdCb3g9IjAgMCAyOCAyOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTQiIGN5PSIxNCIgcj0iMTQiIGZpbGw9IiNERTZBOUI3Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOEY0NTEzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+4py9PC90ZXh0Pgo8L3N2Zz4='
@@ -144,11 +169,12 @@ export function CollaboratorsChart({ users }) {
           label: {
             show: true,
             position: 'right',
-            formatter: '{c} 🍰',
+            distance: 8,
+            formatter: (params) => `${Number(params.value).toFixed(2)} 🍰`,
             fontSize: 12
           },
           name: 'Saldo',
-          barWidth: 40,
+          barWidth: 28,
           animationDelay: (idx) => idx * 50
         }
       ]
@@ -160,14 +186,17 @@ export function CollaboratorsChart({ users }) {
     const handleResize = () => {
       chart.resize()
     }
+    const resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver.observe(chartRef.current)
     window.addEventListener('resize', handleResize)
 
     return () => {
+      resizeObserver.disconnect()
       window.removeEventListener('resize', handleResize)
       chart.dispose()
       chartInstanceRef.current = null
     }
-  }, [users])
+  }, [users, isMobile])
 
   if (!users || users.length === 0) {
     return (
@@ -178,13 +207,16 @@ export function CollaboratorsChart({ users }) {
   }
 
   return (
-    <div
-      ref={chartRef}
-      style={{
-        width: '100%',
-        height: '400px',
-        minHeight: '300px'
-      }}
-    />
+    <div className="chart-scroll-container">
+      <div
+        className="chart-scroll-content"
+        ref={chartRef}
+        style={{
+          width: '100%',
+          height: `${chartHeight}px`,
+          minHeight: '300px'
+        }}
+      />
+    </div>
   )
 }

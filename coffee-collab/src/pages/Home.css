@@ -1,0 +1,143 @@
+.home-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-header-actions,
+.home-profile-card,
+.home-card {
+  min-width: 0;
+}
+
+.home-card {
+  width: 100%;
+  overflow: visible;
+}
+
+.home-logo-wrapper {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.home-logo {
+  display: block;
+  width: min(100%, 480px);
+  height: auto;
+  max-height: 190px;
+  object-fit: contain;
+}
+
+.home-users-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.home-user-card {
+  min-width: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .home-header {
+    padding: 16px !important;
+    justify-content: center !important;
+  }
+
+  .home-audit-banner {
+    margin-bottom: 16px !important;
+  }
+
+  .home-logo-wrapper {
+    width: 100%;
+    margin: 0 !important;
+    justify-content: center;
+  }
+
+  .home-logo {
+    width: min(100%, 420px) !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 160px;
+  }
+
+  .home-header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .home-profile-card {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-page {
+    font-size: 14px;
+  }
+
+  .home-header {
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .home-logo-wrapper {
+    margin: 0 !important;
+  }
+
+  .home-logo {
+    max-height: 120px;
+  }
+
+  .home-header-actions {
+    gap: 10px !important;
+  }
+
+  .home-profile-card {
+    padding: 12px !important;
+    gap: 12px !important;
+    border-radius: 16px !important;
+    justify-content: flex-start;
+  }
+
+  .home-profile-card img {
+    width: 48px !important;
+    height: 48px !important;
+    flex-shrink: 0;
+  }
+
+  .home-profile-card > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .home-action-wrapper {
+    flex: 1;
+  }
+
+  .home-action-button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .home-card {
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .home-indicators-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-users-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-users-grid {
+    grid-template-columns: 1fr;
+  }
+}
